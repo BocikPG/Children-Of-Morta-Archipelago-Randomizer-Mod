@@ -35,7 +35,7 @@ public class Connection
 		LoginResult result;
 
 
-		result = pSession.TryConnectAndLogin("Children of Morta", user, ItemsHandlingFlags.AllItems, new Version(0, 5, 1)); //consider other item flags
+		result = pSession.TryConnectAndLogin("Children of Morta", user, ItemsHandlingFlags.AllItems, new Version(0, 6, 1)); //consider other item flags
 		//app will freeze here (hopefully not for long)
 
 		if (!result.Successful)
@@ -82,10 +82,11 @@ public class Connection
 		helper.DequeueItem();
 	}
 
-	public void ReceiveItem(ItemInfo item, bool isReceivingMany)
+	public void ReceiveDivineRelic(ItemInfo item, bool isReceivingMany)
 	{
-		if (item.Player == pSession.Players.ActivePlayer)
-			DivineRelics.SearchForRelicByNameAndAddItToPlayer(item.ItemName, isReceivingMany);
+		if(item == null || item.ItemName == null || item.ItemName.StartsWith("Character"))
+			return;
+		DivineRelics.SearchForRelicByNameAndAddItToPlayer(item.ItemName, isReceivingMany);
 	}
 
 

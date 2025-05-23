@@ -48,7 +48,7 @@ public class Plugin : BaseUnityPlugin
         // var a = CharacterSelect.sActiveMenu.pCharacterPanels[0];
     }
 
-    private static readonly string _onMorningStartedEventJSONString = "{\"name\": \"BocikInit\",\"version_\":1,\"target_method_name_\": \"Event_OnMorningStarted\"}";
+    private const string _onMorningStartedEventJSONString = "{\"name\": \"BocikInit\",\"version_\":1,\"target_method_name_\": \"Event_OnMorningStarted\"}";
 
 
     IEnumerator WaitAndInit()

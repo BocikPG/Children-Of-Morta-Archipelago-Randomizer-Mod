@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Drawing;
@@ -19,6 +20,18 @@ public class OnMorningStarted : MonoBehaviour
     [EventTarget]
     private void Event_OnMorningStarted()
     {
+        SetUpPlayableCharacters();
+
+        //ProfileManager.sSingleton.pLocalProfile.UnlockCharacter(Zyklus.Player.PlayerCharacterEnum.Kevin);
+
+        //UnlockPortals(); 
+
+        //LootStaticDataContainer.sSingleton.AddToDropList(); //immediately (in update) drops loot on floor
+    }
+
+    private static void SetUpPlayableCharacters()
+    {
+        //block all characters
         ProfileManager.sSingleton.pLocalProfile.LockCharacter(Zyklus.Player.PlayerCharacterEnum.John);
         ProfileManager.sSingleton.pLocalProfile.LockCharacter(Zyklus.Player.PlayerCharacterEnum.Mark);
         ProfileManager.sSingleton.pLocalProfile.LockCharacter(Zyklus.Player.PlayerCharacterEnum.Kevin);
@@ -27,18 +40,32 @@ public class OnMorningStarted : MonoBehaviour
         ProfileManager.sSingleton.pLocalProfile.LockCharacter(Zyklus.Player.PlayerCharacterEnum.Joey);
         ProfileManager.sSingleton.pLocalProfile.LockCharacter(Zyklus.Player.PlayerCharacterEnum.Apon);
         ProfileManager.sSingleton.pLocalProfile.LockCharacter(Zyklus.Player.PlayerCharacterEnum.Bec);
+        //block end
 
-        Debug.LogError("kisiel");
-        ProfileManager.sSingleton.pLocalProfile.UnlockCharacter(Zyklus.Player.PlayerCharacterEnum.Kevin);
-        ProfileManager.sSingleton.pLocalProfile.UnlockCharacter(Zyklus.Player.PlayerCharacterEnum.Linda);
-        //ProfileManager.sSingleton.pLocalProfile.UnlockCharacter(Zyklus.Player.PlayerCharacterEnum.Lucy);
-        ProfileManager.sSingleton.pLocalProfile.UnlockCharacter(Zyklus.Player.PlayerCharacterEnum.Bec);
+        if (Connection.pSession.Items == null || Connection.pSession.Items.AllItemsReceived == null)
+            return;
 
-        //UnlockPortals(); 
-
-        //LootStaticDataContainer.sSingleton.AddToDropList(); //immediately (in update) drops loot on floor
-
-        //Debug.LogFormat("Preorders done. pool count = {0}", (object) GameObjectPool.sSingleton.pEntriesCount);
+        Plugin.Logger.LogWarning("items are here");
+        foreach (var item in Connection.pSession.Items.AllItemsReceived)
+        {
+            Plugin.Logger.LogWarning(item?.ItemName);
+            Plugin.Logger.LogWarning(item?.ItemGame);
+            Plugin.Logger.LogWarning(item?.ItemDisplayName);
+            Plugin.Logger.LogWarning(item?.ItemId);
+            if (item.ItemName == null)
+                continue;
+            if (item.ItemName.StartsWith("Character "))
+            {
+                var name = item.ItemName.Substring(10);
+                if (Enum.TryParse<Zyklus.Player.PlayerCharacterEnum>(name, out var result))
+                {
+                    Plugin.Logger.LogWarning("unlocking");
+                    ProfileManager.sSingleton.pLocalProfile.UnlockCharacter(result);
+                }
+                else
+                    Plugin.Logger.LogError("Character not found");
+            }
+        }
     }
 
     private static void UnlockPortals() // it works on the next day TODO: set up for other portals than first one

@@ -45,7 +45,7 @@ public static class DivineRelics
 
 		foreach (var item in Connection.pSession.Items.AllItemsReceived) //ASK:all my items, or all in multiWorld? if first remove player check in function
 		{
-			Plugin.sSingleton.pConnection.ReceiveItem(item, true);//wonky ;v
+			Plugin.sSingleton.pConnection.ReceiveDivineRelic(item, true);//wonky ;v
 		}
 
 		if (!savedValue)
@@ -89,12 +89,17 @@ public static class DivineRelics
 
 	public static void SearchForRelicByNameAndAddItToPlayer(string relicName, bool isReceivingMany = false)
 	{
+		if(relicName == null || relicName.StartsWith("Character "))
+		{
+			return;
+		}
+
 		foreach (var relic in pDivineRelics)
 		{
 			Plugin.Logger.LogInfo("relic comparing " + relic.name);
 			if (relic.name.StartsWith(relicName))
 			{
-				Plugin.Logger.LogInfo("relic found " + relic.name);
+				//Plugin.Logger.LogInfo("relic found " + relic.name);
 				if (!relic.GetIsUsable())
 				{
 					GameObject obj = LootStaticDataContainer.sSingleton.DropDivineRelic(relic, Vector2.zero, Vector2.zero, Zyklus.Player.PlayerNumberFlag.P1, false, !isReceivingMany); //TODO: settings for sounds :3 or just remove ear rape on loading xD 
