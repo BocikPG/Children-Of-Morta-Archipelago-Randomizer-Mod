@@ -36,7 +36,7 @@ public class Connection
 
 
 		result = pSession.TryConnectAndLogin("Children of Morta", user, ItemsHandlingFlags.AllItems, new Version(0, 6, 1)); //consider other item flags
-		//app will freeze here (hopefully not for long)
+																															//app will freeze here (hopefully not for long)
 
 		if (!result.Successful)
 		{
@@ -77,16 +77,12 @@ public class Connection
 		if (peeked == null)
 			return;
 		Plugin.Logger.LogInfo("relic seeking " + peeked.ItemName);
-		DivineRelics.SearchForRelicByNameAndAddItToPlayer(peeked.ItemName);
+		if (DivineRelics.SearchForRelicByNameAndAddItToPlayer(peeked.ItemName))
+			return;
+		if (Items.Talents.IfIsTalentLearnIt(peeked.ItemName))
+			return;
 
 		helper.DequeueItem();
-	}
-
-	public void ReceiveDivineRelic(ItemInfo item, bool isReceivingMany)
-	{
-		if(item == null || item.ItemName == null || item.ItemName.StartsWith("Character"))
-			return;
-		DivineRelics.SearchForRelicByNameAndAddItToPlayer(item.ItemName, isReceivingMany);
 	}
 
 

@@ -2,6 +2,8 @@ using System.Collections;
 using System.Drawing;
 using System.IO;
 using System.Reflection;
+using System.Runtime.Serialization;
+using System.Runtime.Serialization.Formatters.Binary;
 using Altar.Events;
 using ArchipelagoRandomizer;
 using UnityEngine;
@@ -19,5 +21,21 @@ public static class Utils
 	public static void SetFieldValue<T>(this object obj, string name, T value)
 	{
 		obj.GetType().GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).SetValue(obj, value);
+	}
+
+	public static T DeepCopy<T>(this T source) where T : class
+	{
+		if(source == null)
+		{
+			return null;
+		}
+
+		using (MemoryStream stream = new MemoryStream())
+		{
+			IFormatter formatter = new BinaryFormatter();
+			formatter.Serialize(stream, source);
+			stream.Seek(0, SeekOrigin.Begin);
+			return (T)formatter.Deserialize(stream);
+		}
 	}
 }

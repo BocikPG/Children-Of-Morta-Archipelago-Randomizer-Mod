@@ -1,0 +1,39 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build",
+      "type": "shell",
+      "command": "dotnet",
+      "args": ["build"],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "copy-dll",
+      "type": "shell",
+      "command": "Copy-Item",
+      "args": [
+        {
+          "value": "${workspaceFolder}\\bin\\Debug\\net46\\ArchipelagoRandomizer.dll",
+          "quoting": "strong"
+        },
+        "-Destination",
+        {
+          "value": "E:\\Games\\Steam\\steamapps\\common\\ChildrenOfMorta\\BepInEx\\plugins\\ArchipelagoRandomizer\\ArchipelagoRandomizer.dll",
+          "quoting": "strong"
+        },
+        "-Force"
+      ]
+    },
+    {
+      "label": "build-and-move",
+      "dependsOn": ["build", "copy-dll"],
+      "dependsOrder": "sequence",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}

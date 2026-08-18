@@ -29,6 +29,11 @@ public class Plugin : BaseUnityPlugin
     public static Plugin sSingleton;
     public Connection pConnection;
 
+    public void Update()
+    {
+        DebugPlugin.Update();
+    }
+
     private void Awake()
     {
         // Plugin startup logic
@@ -60,9 +65,11 @@ public class Plugin : BaseUnityPlugin
             yield return null;
         }
 
-
+        CheatMenu.sSingleton.Show();
         OnMorningStartedSetUp();
         Matrix.sOnMatrixGenDone += DivineRelics.GiveReceivedRelics;
+        //Matrix.sOnMatrixGenDone += TalentsManager.SetTalents;
+        //ZyklusSceneManager.sSingleton.OnMaterialPlaceChanged += TalentsManager.SetTalents;
         ZyklusSceneManager.sSingleton.OnMaterialPlaceChanged += APItemsUtils.SetUpAPItems;
     }
 
@@ -92,6 +99,15 @@ public class Plugin : BaseUnityPlugin
     }
 
     //notes
+
+    public virtual void Endless()
+    {
+        //ProfileManager.sSingleton.pLocalUserData.SetEndlessUnlockState(true); //unlock endless (on game start)
+
+
+        //EndlessRunStats.pBossesKilled;
+        //EndlessRunStats.pChampionsKilled;
+    }
 
     //Info on cutScene end (for new portals unlocks)
     //     [Info   : Unity Log] Begining cutscene skip by user. debug_text=Wind opening sequence - Sequence
@@ -158,7 +174,7 @@ public class Plugin : BaseUnityPlugin
 
         //basea.player_.pConsumableManager.ConsumableObtained(basea);
 
-
+                //LootStaticDataContainer.sSingleton.AddToDropList(); //immediately (in update) drops loot on floor
     }
 
 

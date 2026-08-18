@@ -15,12 +15,17 @@ public static class DivineRelics
 	internal static void BackUpRelics(List<DivineRelicHandle> relics)
 	{
 		if (pDivineRelics == null)
+		{
+			// foreach(var item in relics)
+			// 	Plugin.Logger.LogWarning(item.name);
 			pDivineRelics = relics;
+		}
 	}
 
 	internal static DivineRelicHandle GetTier1Relic()
 	{
-		return pDivineRelics[1]; //TODO: actually find differences between them xd
+		var relic = new DivineRelicHandle();
+		return Utils.DeepCopy(pDivineRelics[1]);  //TODO: actually find differences between them xd
 	}
 
 	internal static DivineRelicHandle GetTier2Relic()
@@ -43,9 +48,9 @@ public static class DivineRelics
 		if (!savedValue)
 			LootStaticDataContainer.sSingleton.SetFieldValue("should_throw_", true);
 
-		foreach (var item in Connection.pSession.Items.AllItemsReceived) //ASK:all my items, or all in multiWorld? if first remove player check in function
+		foreach (var item in Connection.pSession.Items.AllItemsReceived) 
 		{
-			Plugin.sSingleton.pConnection.ReceiveDivineRelic(item, true);//wonky ;v
+			SearchForRelicByNameAndAddItToPlayer(item.ItemName, true);
 		}
 
 		if (!savedValue)
@@ -87,16 +92,16 @@ public static class DivineRelics
 
 	}
 
-	public static void SearchForRelicByNameAndAddItToPlayer(string relicName, bool isReceivingMany = false)
+	public static bool SearchForRelicByNameAndAddItToPlayer(string relicName, bool isReceivingMany = false)
 	{
-		if(relicName == null || relicName.StartsWith("Character "))
+		if(relicName == null)
 		{
-			return;
+			return false;
 		}
 
 		foreach (var relic in pDivineRelics)
 		{
-			Plugin.Logger.LogInfo("relic comparing " + relic.name);
+			//Plugin.Logger.LogInfo("relic comparing " + relic.name);
 			if (relic.name.StartsWith(relicName))
 			{
 				//Plugin.Logger.LogInfo("relic found " + relic.name);
@@ -123,8 +128,10 @@ public static class DivineRelics
 					//PlayerManager.sSingleton.GetPlayer(0).pDivineRelicContainer.AddUsableDivineRelic(obj.GetComponent<UsableDivineRelicBase>());
 				}
 
-				break;
+				return true;
 			}
 		}
+
+		return false;
 	}
 }

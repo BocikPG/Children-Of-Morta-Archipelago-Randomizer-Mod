@@ -6,31 +6,37 @@ using System.IO;
 using Altar.Events;
 using Altar.Pool;
 using ArchipelagoRandomizer;
+using Items;
 using UnityEngine;
 using UnityEngine.Diagnostics;
 using Zyklus.Home;
 using Zyklus.Loot;
 using Zyklus.Managers;
+using Zyklus.Morta;
 using Zyklus.UI;
 
 public class OnMorningStarted : MonoBehaviour
 {
 
-
     [EventTarget]
     private void Event_OnMorningStarted()
     {
+        if (ProfileManager.sSingleton.pGameMode != GameMode.Endless)
+            return;
+
         SetUpPlayableCharacters();
 
-        //ProfileManager.sSingleton.pLocalProfile.UnlockCharacter(Zyklus.Player.PlayerCharacterEnum.Kevin);
 
-        //UnlockPortals(); 
 
-        //LootStaticDataContainer.sSingleton.AddToDropList(); //immediately (in update) drops loot on floor
+        //UnlockCampaignPortals(); //in endless there are no portals - keeping for maybe one day someone will code it :v
+
     }
 
     private static void SetUpPlayableCharacters()
     {
+        if (Connection.pLogin == null || Connection.pLogin.Successful == false || Connection.pSession.Items == null || Connection.pSession.Items.AllItemsReceived == null)
+            return;
+
         //block all characters
         ProfileManager.sSingleton.pLocalProfile.LockCharacter(Zyklus.Player.PlayerCharacterEnum.John);
         ProfileManager.sSingleton.pLocalProfile.LockCharacter(Zyklus.Player.PlayerCharacterEnum.Mark);
@@ -42,18 +48,31 @@ public class OnMorningStarted : MonoBehaviour
         ProfileManager.sSingleton.pLocalProfile.LockCharacter(Zyklus.Player.PlayerCharacterEnum.Bec);
         //block end
 
-        if (Connection.pSession.Items == null || Connection.pSession.Items.AllItemsReceived == null)
-            return;
+        if (DebugPlugin.pIsDebug)
+        {
+            ProfileManager.sSingleton.pLocalProfile.UnlockCharacter(Zyklus.Player.PlayerCharacterEnum.John);
+            ProfileManager.sSingleton.pLocalProfile.UnlockCharacter(Zyklus.Player.PlayerCharacterEnum.Mark);
+            ProfileManager.sSingleton.pLocalProfile.UnlockCharacter(Zyklus.Player.PlayerCharacterEnum.Kevin);
+            ProfileManager.sSingleton.pLocalProfile.UnlockCharacter(Zyklus.Player.PlayerCharacterEnum.Linda);
+            ProfileManager.sSingleton.pLocalProfile.UnlockCharacter(Zyklus.Player.PlayerCharacterEnum.Lucy);
+            ProfileManager.sSingleton.pLocalProfile.UnlockCharacter(Zyklus.Player.PlayerCharacterEnum.Joey);
+            ProfileManager.sSingleton.pLocalProfile.UnlockCharacter(Zyklus.Player.PlayerCharacterEnum.Apon);
+            ProfileManager.sSingleton.pLocalProfile.UnlockCharacter(Zyklus.Player.PlayerCharacterEnum.Bec);
+        }
+
 
         Plugin.Logger.LogWarning("items are here");
         foreach (var item in Connection.pSession.Items.AllItemsReceived)
         {
-            Plugin.Logger.LogWarning(item?.ItemName);
-            Plugin.Logger.LogWarning(item?.ItemGame);
-            Plugin.Logger.LogWarning(item?.ItemDisplayName);
-            Plugin.Logger.LogWarning(item?.ItemId);
+            // Plugin.Logger.LogWarning(item?.ItemName);
+            // Plugin.Logger.LogWarning(item?.ItemGame);
+            // Plugin.Logger.LogWarning(item?.ItemDisplayName);
+            // Plugin.Logger.LogWarning(item?.ItemId);
             if (item.ItemName == null)
+            {
+                Plugin.Logger.LogError(item.ItemId + " ItemName is null, wrong world set up - missing item_name_to_id ref");
                 continue;
+            }
             if (item.ItemName.StartsWith("Character "))
             {
                 var name = item.ItemName.Substring(10);
@@ -68,8 +87,18 @@ public class OnMorningStarted : MonoBehaviour
         }
     }
 
-    private static void UnlockPortals() // it works on the next day TODO: set up for other portals than first one
+    private static List<MortaPlacesEnum> PortalsToOpen = new();
+    private static List<MortaPlacesEnum> OpenedPortals = new();
+
+    private static void UnlockCampaignPortals() // it works on the next day TODO: set up for other portals than first one
     {
+        bool? include = Connection.pSession.DataStorage[Archipelago.MultiClient.Net.Enums.Scope.Game, "includePortals"];
+        if (include == null)
+        {
+            Plugin.Logger.LogError("Include portals setting not found");
+            include = false;
+        }
+
         LocalDatabaseHelper.sSingleton.UnlockPlace(Zyklus.Morta.MortaPlacesEnum.WindTemple);
         LocalDatabaseHelper.sSingleton.ClearDungeon(Zyklus.Morta.MortaDungeonsEnum.Ruins, true);
 
@@ -86,16 +115,90 @@ public class OnMorningStarted : MonoBehaviour
 
         var singleton = DungeonSelectMenu.sSingleton;
 
-        //these two lines actually triggers cutScenes (on the next day(u sure?) cuz triggering OnMorningStarted - preferably find better event) 
-        singleton.SetFieldValue("is_first_time_unlocked_", true);
-        singleton.SetFieldValue("first_time_cleared_dungeon_index_", 2);
-
 
         var list = singleton.GetFieldValue<List<DungeonSelectButton>>("pSelectButtons");
 
-        foreach (var button in list)
+        foreach (var item in Connection.pSession.Items.AllItemsReceived)
         {
-            button.SetFieldValue("required_dungeon_t_unlock_", Zyklus.Morta.MortaDungeonsEnum.Tutorial);
+            if (!item.ItemName.StartsWith("Dungeon"))
+                continue;
+
+            var dungName = item.ItemName.Substring(8);
+
+            foreach (var button in list)
+            {
+                if (button.pDungeon.ToString() == dungName)
+                {
+                    Plugin.Logger.LogError(dungName);
+
+                    button.SetFieldValue("required_dungeon_t_unlock_", Zyklus.Morta.MortaDungeonsEnum.Tutorial);
+
+                    var portalCandidate = button.pDungeon.GetCampaignDungeonPlace();
+
+                    if (!OpenedPortals.Contains(portalCandidate))
+                    {
+                        if ((bool)include)
+                        {
+                            Plugin.Logger.LogError("inlcude");
+                            foreach (var itemSmall in Connection.pSession.Items.AllItemsReceived)
+                            {
+                                if (itemSmall.ItemName.StartsWith("Portal "))
+                                {
+                                    var portalName = item.ItemName.Substring(7);
+
+                                    if (portalCandidate.ToString() == portalName)
+                                    {
+                                        PortalsToOpen.Add(portalCandidate);
+                                    }
+                                }
+                            }
+                        }
+                        else
+                        {
+                            Plugin.Logger.LogError("add " + portalCandidate);
+                            PortalsToOpen.Add(portalCandidate);
+                        }
+
+                    }
+                }
+            }
+        }
+
+        if (PortalsToOpen.Count > 0)
+        {
+            if (PortalsToOpen[0] == MortaPlacesEnum.Cave)
+            {
+                SetAndRemoveFromList(singleton, -1); //using values from MortaDungeonsEnum
+            }
+            else if (PortalsToOpen[0] == MortaPlacesEnum.WindTemple)
+            {
+                SetAndRemoveFromList(singleton, 2);
+            }
+            else if (PortalsToOpen[0] == MortaPlacesEnum.Forest)
+            {
+                SetAndRemoveFromList(singleton, 7);
+            }
+            else if (PortalsToOpen[0] == MortaPlacesEnum.Magma)
+            {
+                SetAndRemoveFromList(singleton, 16); //?
+            }
+            else if (PortalsToOpen[0] == MortaPlacesEnum.Temple)
+            {
+                SetAndRemoveFromList(singleton, 10001);//?
+            }
+
+        }
+
+        static void SetAndRemoveFromList(DungeonSelectMenu singleton, int dungeonIndex)
+        {
+            //these two lines actually triggers cutScenes (on the next day(u sure?) cuz triggering OnMorningStarted - preferably find better event) 
+
+            Plugin.Logger.LogError("set " + dungeonIndex);
+
+
+            singleton.SetFieldValue("is_first_time_unlocked_", true);
+            singleton.SetFieldValue("first_time_cleared_dungeon_index_", dungeonIndex);
+            PortalsToOpen.RemoveAt(0);
         }
     }
 }
