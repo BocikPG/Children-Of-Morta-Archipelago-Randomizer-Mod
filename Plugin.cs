@@ -1,21 +1,12 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using Altar.DB;
-using Altar.Events;
 using BepInEx;
 using BepInEx.Logging;
 using Items;
-using UnityEngine;
-using Workshop;
-using Zyklus.Common;
-using Zyklus.DivineRelic;
 using Zyklus.Home;
 using Zyklus.LevelGeneration;
 using Zyklus.Loot;
 using Zyklus.Managers;
-using Zyklus.Player;
 using Zyklus.UI;
 
 namespace ArchipelagoRandomizer;
@@ -53,8 +44,6 @@ public class Plugin : BaseUnityPlugin
         // var a = CharacterSelect.sActiveMenu.pCharacterPanels[0];
     }
 
-    private const string _onMorningStartedEventJSONString = "{\"name\": \"BocikInit\",\"version_\":1,\"target_method_name_\": \"Event_OnMorningStarted\"}";
-
 
     IEnumerator WaitAndInit()
     {
@@ -66,31 +55,14 @@ public class Plugin : BaseUnityPlugin
         }
 
         CheatMenu.sSingleton.Show();
-        OnMorningStartedSetUp();
-        Matrix.sOnMatrixGenDone += DivineRelics.GiveReceivedRelics;
-        //Matrix.sOnMatrixGenDone += TalentsManager.SetTalents;
+        OnMorningStarted.OnMorningStartedSetUp();
+        OnMatrixGenDone.SubscribeToMatrixGenDone();
         //ZyklusSceneManager.sSingleton.OnMaterialPlaceChanged += TalentsManager.SetTalents;
         ZyklusSceneManager.sSingleton.OnMaterialPlaceChanged += APItemsUtils.SetUpAPItems;
     }
 
 
-    public void OnMorningStartedSetUp()
-    {
-        var target = HomeManager.sSingleton.gameObject.AddComponent<OnMorningStarted>();
-        AltarEventTarget eventTarget = JsonUtility.FromJson<AltarEventTarget>(_onMorningStartedEventJSONString); //bypass private constructor
-        eventTarget.pTargetBehaviour = target;
 
-        Debug.LogError(eventTarget.GetDebugText());
-        foreach (var eventInfo in HomeManager.sSingleton.GetAllAltarEvents(true))
-        {
-            if (eventInfo.pAltarEventFieldName == "on_morning_started_")
-            {
-                eventInfo.pAltarEvent.AddTarget(eventTarget);
-            }
-        }
-
-
-    }
 
 
     public T GetInstance<T>(T prefab) where T: UnityEngine.Object

@@ -73,13 +73,16 @@ public class Connection
 			return;
 		}
 
+		var player = PlayerManager.sSingleton.GetPlayer(0); // maybe player 2 too?
+		var lootContainer = LootStaticDataContainer.sSingleton;
+
 		var peeked = helper.PeekItem();
 		if (peeked == null)
 			return;
 		Plugin.Logger.LogInfo("relic seeking " + peeked.ItemName);
-		if (DivineRelics.SearchForRelicByNameAndAddItToPlayer(peeked.ItemName))
+		if (DivineRelics.SearchForRelicByNameAndAddItToPlayer(peeked.ItemName, lootContainer))
 			return;
-		if (Items.Talents.IfIsTalentLearnIt(peeked.ItemName))
+		if (Items.Talents.IfIsTalentLearnIt(peeked.ItemName, player))
 			return;
 
 		helper.DequeueItem();

@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using Archipelago.MultiClient.Net.Helpers;
 using ArchipelagoRandomizer;
 using UnityEngine;
+using Zyklus;
 using Zyklus.DivineRelic;
 using Zyklus.LevelGeneration;
 using Zyklus.Loot;
@@ -18,14 +20,13 @@ public static class DivineRelics
 		{
 			// foreach(var item in relics)
 			// 	Plugin.Logger.LogWarning(item.name);
-			pDivineRelics = relics;
+			pDivineRelics = new List<DivineRelicHandle>(relics);
 		}
 	}
 
 	internal static DivineRelicHandle GetTier1Relic()
 	{
-		var relic = new DivineRelicHandle();
-		return Utils.DeepCopy(pDivineRelics[1]);  //TODO: actually find differences between them xd
+		return pDivineRelics[0];  //TODO: actually find differences between them xd
 	}
 
 	internal static DivineRelicHandle GetTier2Relic()
@@ -40,22 +41,38 @@ public static class DivineRelics
 		return null;
 	}
 
-	public static void GiveReceivedRelics(Matrix matrix)
+	public static void CreateLocationsRelics(ILocationCheckHelper locationCheckHelper)
 	{
-		PlayerManager.sSingleton.GetPlayer(0).pDivineRelicContainer.RemoveAllPassiveDivineRelics();
+		List<DivineRelicHandle> list = new();
 
-		bool savedValue = LootStaticDataContainer.sSingleton.GetFieldValue<bool>("should_throw_");//to spread the items
-		if (!savedValue)
-			LootStaticDataContainer.sSingleton.SetFieldValue("should_throw_", true);
-
-		foreach (var item in Connection.pSession.Items.AllItemsReceived) 
+		if (locationCheckHelper.AllMissingLocations.Count == 0)
 		{
-			SearchForRelicByNameAndAddItToPlayer(item.ItemName, true);
+			Plugin.Logger.LogWarning("no locations found, skipping relics creation");
+			LootStaticDataContainer.sSingleton.pAvailableDivineRelics = list;
+			return;
 		}
 
-		if (!savedValue)
-			LootStaticDataContainer.sSingleton.SetFieldValue("should_throw_", savedValue);
+		DivineRelicHandle t1Relic = GetTier1Relic();
 
+
+		Plugin.Logger.LogWarning(locationCheckHelper.AllMissingLocations.Count);
+
+		foreach (var item in locationCheckHelper.AllMissingLocations)
+		{
+			Plugin.Logger.LogWarning(item);
+			list.Add(TurnRelicToAPItem(Plugin.sSingleton.GetInstance(t1Relic), item));
+		}
+		LootStaticDataContainer.sSingleton.pAvailableDivineRelics = list;
+	}
+
+	public static DivineRelicHandle TurnRelicToAPItem(DivineRelicHandle relic, long item)
+	{
+		relic.name = item.ToString();
+		// TODO: relic.pLocalizedDisplayName = item.ItemDisplayName;
+		APItemsUtils.SetInGameSprite(relic, "ingame_sprite_");
+		Utils.SetFieldValue<List<SpritePair>>(relic, "conditional_ingame_sprite_list_", null);
+		return relic;
+		//ILocalizable.SetLocalizedKeys()
 	}
 
 
@@ -92,9 +109,9 @@ public static class DivineRelics
 
 	}
 
-	public static bool SearchForRelicByNameAndAddItToPlayer(string relicName, bool isReceivingMany = false)
+	public static bool SearchForRelicByNameAndAddItToPlayer(string relicName, LootStaticDataContainer lootStaticDataContainer, bool isReceivingMany = false)
 	{
-		if(relicName == null)
+		if (relicName == null || lootStaticDataContainer == null)
 		{
 			return false;
 		}
@@ -107,24 +124,24 @@ public static class DivineRelics
 				//Plugin.Logger.LogInfo("relic found " + relic.name);
 				if (!relic.GetIsUsable())
 				{
-					GameObject obj = LootStaticDataContainer.sSingleton.DropDivineRelic(relic, Vector2.zero, Vector2.zero, Zyklus.Player.PlayerNumberFlag.P1, false, !isReceivingMany); //TODO: settings for sounds :3 or just remove ear rape on loading xD 
+					GameObject obj = lootStaticDataContainer.DropDivineRelic(relic, Vector2.zero, Vector2.zero, Zyklus.Player.PlayerNumberFlag.P1, false, !isReceivingMany) ?? LootStaticDataContainer.sSingleton.DropDivineRelic(relic, Vector2.zero, Vector2.zero, Zyklus.Player.PlayerNumberFlag.P1, false, !isReceivingMany); //TODO: settings for sounds :3 or just remove ear rape on loading xD 
 					var passive = obj.GetComponent<PassiveDivineRelicBase>();
 					passive.InteractionComponent_OnInteract(PlayerManager.sSingleton.GetPlayer(0).pInteractionManager);
 				}
 				else
 				{
 					var pos = PlayerManager.sSingleton.GetPlayer(0).transform.position;
-					bool savedValue = LootStaticDataContainer.sSingleton.GetFieldValue<bool>("should_throw_");
+					bool savedValue = lootStaticDataContainer.GetFieldValue<bool>("should_throw_");
 					if (!savedValue)
-						LootStaticDataContainer.sSingleton.SetFieldValue("should_throw_", true);
-					GameObject obj = LootStaticDataContainer.sSingleton.DropDivineRelic(relic,
+						lootStaticDataContainer.SetFieldValue("should_throw_", true);
+					GameObject obj = lootStaticDataContainer.DropDivineRelic(relic,
 															isReceivingMany ? new Vector2(pos.x + UnityEngine.Random.Range(-5, 5), pos.y + UnityEngine.Random.Range(-5, 5)) : new Vector2(pos.x, pos.y),
 															new Vector2(UnityEngine.Random.value, UnityEngine.Random.value).normalized,
 															Zyklus.Player.PlayerNumberFlag.P1,
 															true,
 															!isReceivingMany);
 					if (!savedValue)
-						LootStaticDataContainer.sSingleton.SetFieldValue("should_throw_", savedValue);
+						lootStaticDataContainer.SetFieldValue("should_throw_", savedValue);
 					//PlayerManager.sSingleton.GetPlayer(0).pDivineRelicContainer.AddUsableDivineRelic(obj.GetComponent<UsableDivineRelicBase>());
 				}
 

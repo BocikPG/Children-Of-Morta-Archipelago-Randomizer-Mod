@@ -1,13 +1,13 @@
+using System;
 using System.Collections.Generic;
+using Archipelago.MultiClient.Net.Helpers;
 using ArchipelagoRandomizer;
-using BepInEx.Logging;
 using Talents;
 using Zyklus.LevelGeneration;
 using Zyklus.Loot;
 using Zyklus.Managers;
 using Zyklus.Player;
 using Zyklus.Stat;
-using Zyklus.UI;
 
 namespace Items;
 
@@ -31,7 +31,7 @@ public static class Talents
 			// 		Plugin.Logger.LogWarning(item.name);
 			// Plugin.Logger.LogWarning(null);
 
-			pTalents = talents;
+			pTalents = new List<TalentAsset>(talents);
 		}
 	}
 
@@ -54,33 +54,92 @@ public static class Talents
 		//SkillTreeButton.Confirm(); -- hijack for location sake
 	}
 
-	public static void SetTalents(Matrix matrix)
+	public static void CreateLocationsTalents(ILocationCheckHelper locationCheckHelper)
 	{
-		if (PlayerManager.sSingleton.GetPlayer(0).pTalentManager == null)
+		List<TalentAsset> list = new();
+
+		if (locationCheckHelper.AllMissingLocations.Count == 0)
 		{
-			Plugin.Logger.LogWarning("no talent manager");
+			Plugin.Logger.LogWarning("no locations found, skipping relics creation");
+
+			for (int i = 0; i < 9; i++) //add 9 blank talents (3 of each type) to prevent crash
+			{
+				list.Add(TurnTalentToAPItem(Plugin.sSingleton.GetInstance<TalentAsset>(Items.Talents.pTalents[0]), -100));
+			}
+
+			Utils.SetFieldValue(LootStaticDataContainer.sSingleton, "available_talents_list_", list);
 			return;
 		}
 
-		var player = PlayerManager.sSingleton.GetPlayer(0);
+		Plugin.Logger.LogWarning(locationCheckHelper.AllMissingLocations.Count);
 
-		try
+		foreach (var item in locationCheckHelper.AllMissingLocations)
 		{
-			player.pTalentManager.UnlearnAllTalents();
-		}
-		catch
-		{ }
-
-		foreach (var item in Connection.pSession.Items.AllItemsReceived)
-		{
-			IfIsTalentLearnIt(item.ItemName);
+			Plugin.Logger.LogWarning(item);
+			list.Add(TurnTalentToAPItem(Plugin.sSingleton.GetInstance<TalentAsset>(Items.Talents.pTalents[0]), item));
 		}
 
+		for (int i = 0; i < 9; i++) //add 9 blank talents (3 of each type) to prevent crash
+		{
+			list.Add(TurnTalentToAPItem(Plugin.sSingleton.GetInstance<TalentAsset>(Items.Talents.pTalents[0]), -100));
+		}
+
+		Utils.SetFieldValue(LootStaticDataContainer.sSingleton, "available_talents_list_", list);
 	}
 
-	public static bool IfIsTalentLearnIt(string name)
+
+
+	private static TalentAsset TurnTalentToAPItem(TalentAsset talentAsset, long item)
 	{
-		var player = PlayerManager.sSingleton.GetPlayer(0);
+		if (item == -100)
+		{
+			talentAsset.name = "Blank";
+			APItemsUtils.SetInGameSprite(talentAsset, "icon_");
+			Utils.SetFieldValue(talentAsset, "talent_rarity_", TalentRarities.Generic);
+			// SetAndCycleRarity(talentAsset); // depreciated - if want to revive, change back TalentManager.rune_talent_interval_ to 3
+			// Utils.SetFieldValue(talentAsset, "localized_description_", "Unlucky it gives nothing");
+			// Utils.SetFieldValue(talentAsset, "localized_display_name_", "Empty talent");
+			// Utils.SetFieldValue(talentAsset, "talent_category_", TalentCategory.Other);
+			return talentAsset;
+		}
+
+		talentAsset.name = item.ToString();
+		APItemsUtils.SetInGameSprite(talentAsset, "icon_");
+		// Utils.SetFieldValue(talentAsset, "localized_description_", "Menaingful desscription");
+		// Utils.SetFieldValue(talentAsset, "localized_display_name_", "AP Item");
+		// Utils.SetFieldValue(talentAsset, "talent_category_", TalentCategory.Other);
+		// SetAndCycleRarity(talentAsset);
+		Utils.SetFieldValue(talentAsset, "talent_rarity_", TalentRarities.Generic);
+		Utils.SetFieldValue(talentAsset, "valid_character_", PlayerCharacterEnum.ALL);
+		Utils.SetFieldValue(talentAsset, "max_value_stat_", StatEnum.NONE);
+		Utils.SetFieldValue(talentAsset, "max_acquire_amount_", 0); //this value should be from archipelago (as all)
+
+		return talentAsset;
+	}
+
+	static int isRune = 0;
+
+	private static void SetAndCycleRarity(TalentAsset talentAsset)
+	{
+		if (isRune == 0)
+		{
+			Utils.SetFieldValue(talentAsset, "talent_rarity_", TalentRarities.Rune);
+			isRune = 1;
+		}
+		else if (isRune == 1)
+		{
+			Utils.SetFieldValue(talentAsset, "talent_rarity_", TalentRarities.SkillTree);
+			isRune = 2;
+		}
+		else
+		{
+			Utils.SetFieldValue(talentAsset, "talent_rarity_", TalentRarities.Generic);
+			isRune = 0;
+		}
+	}
+
+	public static bool IfIsTalentLearnIt(string name, PlayerBase player)
+	{
 
 		if (name == null || player == null)
 		{
@@ -110,5 +169,9 @@ public static class Talents
 		return false;
 	}
 
+    internal static void OnMatrixGenDone(Matrix matrix)
+    {
+		Utils.SetFieldValue(PlayerManager.sSingleton.GetPlayer(0).pTalentManager, "rune_talent_interval_", int.MaxValue); //disable rune talents from appearing, not needed to seek one for each character
 
+    }
 }

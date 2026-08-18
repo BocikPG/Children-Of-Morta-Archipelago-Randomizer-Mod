@@ -1,22 +1,35 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
 using Altar.Events;
-using Altar.Pool;
 using ArchipelagoRandomizer;
 using Items;
 using UnityEngine;
-using UnityEngine.Diagnostics;
 using Zyklus.Home;
-using Zyklus.Loot;
 using Zyklus.Managers;
 using Zyklus.Morta;
 using Zyklus.UI;
 
 public class OnMorningStarted : MonoBehaviour
 {
+
+    private const string _onMorningStartedEventJSONString = "{\"name\": \"BocikInit\",\"version_\":1,\"target_method_name_\": \"Event_OnMorningStarted\"}";
+
+
+    public static void OnMorningStartedSetUp()
+    {
+        var target = HomeManager.sSingleton.gameObject.AddComponent<OnMorningStarted>();
+        AltarEventTarget eventTarget = JsonUtility.FromJson<AltarEventTarget>(_onMorningStartedEventJSONString); //bypass private constructor
+        eventTarget.pTargetBehaviour = target;
+
+        Debug.LogError(eventTarget.GetDebugText());
+        foreach (var eventInfo in HomeManager.sSingleton.GetAllAltarEvents(true))
+        {
+            if (eventInfo.pAltarEventFieldName == "on_morning_started_")
+            {
+                eventInfo.pAltarEvent.AddTarget(eventTarget);
+            }
+        }
+    }
 
     [EventTarget]
     private void Event_OnMorningStarted()
@@ -26,7 +39,7 @@ public class OnMorningStarted : MonoBehaviour
 
         SetUpPlayableCharacters();
 
-
+        APItemsUtils.SetUpOnMorningStarted();
 
         //UnlockCampaignPortals(); //in endless there are no portals - keeping for maybe one day someone will code it :v
 
