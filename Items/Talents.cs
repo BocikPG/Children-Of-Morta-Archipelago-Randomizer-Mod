@@ -14,6 +14,7 @@ namespace Items;
 public static class Talents
 {
 	public static List<TalentAsset> pTalents = null; //CONSIDER: split into talents rarity
+	public static TalentAsset pBlankTalent = null;
 	internal static void BackUpTalents(List<TalentAsset> talents)
 	{
 		if (pTalents == null)
@@ -32,6 +33,11 @@ public static class Talents
 			// Plugin.Logger.LogWarning(null);
 
 			pTalents = new List<TalentAsset>(talents);
+
+			pBlankTalent = pTalents.Find(t => t.name == "Critical Chacne Up TalentAsset");
+			(pBlankTalent as StatModificationTalentAsset).pStatModifiers[0].pItem2.pConstValue = 0;
+			(pBlankTalent as StatModificationTalentAsset).pStatModifiers[0].pItem2.pStatValue.pConstValue = 0;
+
 		}
 	}
 
@@ -64,7 +70,7 @@ public static class Talents
 
 			for (int i = 0; i < 9; i++) //add 9 blank talents (3 of each type) to prevent crash
 			{
-				list.Add(TurnTalentToAPItem(Plugin.sSingleton.GetInstance<TalentAsset>(Items.Talents.pTalents[0]), -100));
+				list.Add(TurnTalentToAPItem(Plugin.sSingleton.GetInstance(pBlankTalent), -100));
 			}
 
 			Utils.SetFieldValue(LootStaticDataContainer.sSingleton, "available_talents_list_", list);
@@ -76,12 +82,12 @@ public static class Talents
 		foreach (var item in locationCheckHelper.AllMissingLocations)
 		{
 			Plugin.Logger.LogWarning(item);
-			list.Add(TurnTalentToAPItem(Plugin.sSingleton.GetInstance<TalentAsset>(Items.Talents.pTalents[0]), item));
+			list.Add(TurnTalentToAPItem(Plugin.sSingleton.GetInstance(pBlankTalent), item));
 		}
 
 		for (int i = 0; i < 9; i++) //add 9 blank talents (3 of each type) to prevent crash
 		{
-			list.Add(TurnTalentToAPItem(Plugin.sSingleton.GetInstance<TalentAsset>(Items.Talents.pTalents[0]), -100));
+			list.Add(TurnTalentToAPItem(Plugin.sSingleton.GetInstance(pBlankTalent), -100));
 		}
 
 		Utils.SetFieldValue(LootStaticDataContainer.sSingleton, "available_talents_list_", list);
