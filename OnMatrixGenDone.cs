@@ -24,6 +24,11 @@ public static class OnMatrixGenDone
 		player.pDivineRelicContainer.RemoveAllPassiveDivineRelics();
 		player.pTalentManager.UnlearnAllTalents();
 
+		player.pDivineRelicContainer.OnDivineRelicAcquired -= DivineRelics.OnDivineRelicAcquiredLocally;
+		player.pDivineRelicContainer.OnPassiveDivineRelicAdded -= DivineRelics.OnPassiveDivineRelicAcquiredLocally;
+		player.pDivineRelicContainer.OnDivineRelicAcquired += DivineRelics.OnDivineRelicAcquiredLocally;
+		player.pDivineRelicContainer.OnPassiveDivineRelicAdded += DivineRelics.OnPassiveDivineRelicAcquiredLocally;
+
 		// save old value and allow items to spread
 		bool savedValue = lootContainer.GetFieldValue<bool>("should_throw_");//to spread the items
 		if (!savedValue)

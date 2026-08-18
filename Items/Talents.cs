@@ -168,6 +168,9 @@ public static class Talents
 				{
 					player.pTalentManager.LearnTalent(talent);
 				}
+
+				Plugin.Logger.LogInfo("Received: " + name);
+
 				return true;
 			}
 		}

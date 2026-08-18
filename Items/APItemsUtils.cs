@@ -11,7 +11,6 @@ namespace ArchipelagoRandomizer;
 public class APItemsUtils
 {
 	private static Sprite aPSprite_;
-	private static bool fired = false;
 
 	public static void SetInGameSprite<T>(T relic, string fieldName) where T : class
 	{
@@ -45,12 +44,6 @@ public class APItemsUtils
 		Items.DivineRelics.CreateLocationsRelics(Connection.pSession.Locations);
 		Items.Talents.CreateLocationsTalents(Connection.pSession.Locations);
 
-		if (!fired)
-		{
-			PlayerManager.sSingleton.GetPlayer(0).pDivineRelicContainer.OnDivineRelicAcquired += DivineRelics.OnDivineRelicAcquiredLocally;
-			PlayerManager.sSingleton.GetPlayer(0).pDivineRelicContainer.OnPassiveDivineRelicAdded += DivineRelics.OnPassiveDivineRelicAcquiredLocally;
-			fired = true;
-		}
 
 	}
 

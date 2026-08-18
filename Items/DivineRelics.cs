@@ -14,6 +14,7 @@ public static class DivineRelics
 {
 
 	public static List<DivineRelicHandle> pDivineRelics = null;
+	public static DivineRelicHandle pDivineRelicBlankHandle = null;
 	internal static void BackUpRelics(List<DivineRelicHandle> relics)
 	{
 		if (pDivineRelics == null)
@@ -21,24 +22,8 @@ public static class DivineRelics
 			// foreach(var item in relics)
 			// 	Plugin.Logger.LogWarning(item.name);
 			pDivineRelics = new List<DivineRelicHandle>(relics);
+			pDivineRelicBlankHandle = pDivineRelics.Find(d => d.name == "Cooldown Reduction Divine Relic - Inventory item handle");
 		}
-	}
-
-	internal static DivineRelicHandle GetTier1Relic()
-	{
-		return pDivineRelics[0];  //TODO: actually find differences between them xd
-	}
-
-	internal static DivineRelicHandle GetTier2Relic()
-	{
-		//TODO: find one
-		return null;
-	}
-
-	internal static DivineRelicHandle GetTier3Relic()
-	{
-		//TODO: find one
-		return null;
 	}
 
 	public static void CreateLocationsRelics(ILocationCheckHelper locationCheckHelper)
@@ -52,15 +37,13 @@ public static class DivineRelics
 			return;
 		}
 
-		DivineRelicHandle t1Relic = GetTier1Relic();
-
 
 		Plugin.Logger.LogWarning(locationCheckHelper.AllMissingLocations.Count);
 
 		foreach (var item in locationCheckHelper.AllMissingLocations)
 		{
 			Plugin.Logger.LogWarning(item);
-			list.Add(TurnRelicToAPItem(Plugin.sSingleton.GetInstance(t1Relic), item));
+			list.Add(TurnRelicToAPItem(Plugin.sSingleton.GetInstance(pDivineRelicBlankHandle), item));
 		}
 		LootStaticDataContainer.sSingleton.pAvailableDivineRelics = list;
 	}
@@ -78,8 +61,7 @@ public static class DivineRelics
 
 	public static void OnPassiveDivineRelicAcquiredLocally(PassiveDivineRelicBase divine_relic)
 	{
-		Plugin.Logger.LogInfo(divine_relic.pHandle.name);
-		//do something archipellagy with this :3
+		Plugin.Logger.LogInfo("Found: " + divine_relic.pHandle.name);
 
 		if (long.TryParse(divine_relic.pHandle.name, out var id))
 		{
@@ -96,7 +78,7 @@ public static class DivineRelics
 
 	public static void OnDivineRelicAcquiredLocally(UsableDivineRelicBase current_divine_relic, UsableDivineRelicSlot slot)
 	{
-		Plugin.Logger.LogInfo(current_divine_relic.pHandle.name);
+		Plugin.Logger.LogInfo("Found: " + current_divine_relic.pHandle.name);
 		if (long.TryParse(current_divine_relic.pHandle.name, out var id))
 		{
 			try
@@ -144,6 +126,8 @@ public static class DivineRelics
 						lootStaticDataContainer.SetFieldValue("should_throw_", savedValue);
 					//PlayerManager.sSingleton.GetPlayer(0).pDivineRelicContainer.AddUsableDivineRelic(obj.GetComponent<UsableDivineRelicBase>());
 				}
+
+				Plugin.Logger.LogInfo("Received: " + relicName);
 
 				return true;
 			}
