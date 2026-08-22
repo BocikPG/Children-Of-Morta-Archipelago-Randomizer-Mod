@@ -14,6 +14,32 @@ public class OnMorningStarted : MonoBehaviour
 
     private const string _onMorningStartedEventJSONString = "{\"name\": \"BocikInit\",\"version_\":1,\"target_method_name_\": \"Event_OnMorningStarted\"}";
 
+    private static List<string> locKeys_ = null;
+    private static List<string> locRegions_ = null;
+    private static List<string> locFields_ = null;
+    private static List<string> locNames_ = null;
+    private static bool locSet = false;
+
+    public static List<string> pLocKeys
+    {
+        get => locKeys_;
+        set => locKeys_ = value;
+    }
+    public static List<string> pLocRegions
+    {
+        get => locRegions_;
+        set => locRegions_ = value;
+    }
+    public static List<string> pLocFields
+    {
+        get => locFields_;
+        set => locFields_ = value;
+    }
+    public static List<string> pLocNames
+    {
+        get => locNames_;
+        set => locNames_ = value;
+    }
 
     public static void OnMorningStartedSetUp()
     {
@@ -29,6 +55,22 @@ public class OnMorningStarted : MonoBehaviour
                 eventInfo.pAltarEvent.AddTarget(eventTarget);
             }
         }
+
+        SetUpLocalization();
+    }
+
+    private static void SetUpLocalization()
+    {
+        if (!locSet)
+        {
+            APItemsUtils.SetLocationsFromAPItems();
+            if (locKeys_ != null)
+            {
+                Utils.AddTranslationsToLocalizationData(locKeys_, locRegions_, locFields_, locNames_);
+                locSet = true;
+                Plugin.Logger.LogInfo("Localization for APItems set");
+            }
+        }
     }
 
     [EventTarget]
@@ -36,13 +78,14 @@ public class OnMorningStarted : MonoBehaviour
     {
         if (ProfileManager.sSingleton.pGameMode != GameMode.Endless)
             return;
+            
+        SetUpLocalization();
 
         SetUpPlayableCharacters();
 
         APItemsUtils.SetUpOnMorningStarted();
 
         //UnlockCampaignPortals(); //in endless there are no portals - keeping for maybe one day someone will code it :v
-
     }
 
     private static void SetUpPlayableCharacters()

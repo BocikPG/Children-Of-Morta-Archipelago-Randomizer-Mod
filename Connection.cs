@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
@@ -9,6 +10,7 @@ using ArchipelagoRandomizer;
 using BepInEx.Logging;
 using Items;
 using UnityEngine;
+using Zyklus;
 using Zyklus.DivineRelic;
 using Zyklus.Loot;
 using Zyklus.Managers;
@@ -64,30 +66,55 @@ public class Connection
 		pLogin = loginSuccess;
 	}
 
+	private List<ReceivedItemsHelper> itemsToReceiveQueue = new();
+
 	public void ReceiveItem(ReceivedItemsHelper helper)
-	{
-		if (DivineRelics.pDivineRelics == null) //connected before game init - doesn't care about items
+    {
+        if (DivineRelics.pDivineRelics == null) //connected before game init - doesn't care about items
+        {
+            helper.PeekItem();
+            helper.DequeueItem();
+            return;
+        }
+
+        if (General.sIsCeaseFireInProgress) //game is paused
+        {
+            itemsToReceiveQueue.Add(helper);
+            General.sSingleton.OnCeaseFireStateChanged += OnCeaseFireStateChanged;
+            return;
+        }
+
+        ReceiveItemFromHelper(helper);
+    }
+
+    private static void ReceiveItemFromHelper(ReceivedItemsHelper helper)
+    {
+        var player = PlayerManager.sSingleton.GetPlayer(0); // maybe player 2 too?
+        var lootContainer = LootStaticDataContainer.sSingleton;
+
+        var peeked = helper.PeekItem();
+        if (peeked == null)
+            return;
+        Plugin.Logger.LogInfo("relic seeking " + peeked.ItemName);
+        if (DivineRelics.SearchForRelicByNameAndAddItToPlayer(peeked.ItemName, lootContainer, false, helper))
+            return;
+        if (Items.Talents.IfIsTalentLearnIt(peeked.ItemName, player, helper))
+            return;
+
+        helper.DequeueItem();
+    }
+
+    private void OnCeaseFireStateChanged()
+    {
+		if(General.sIsCeaseFireInProgress)
+			return;
+
+		General.sSingleton.OnCeaseFireStateChanged -= OnCeaseFireStateChanged;
+
+		foreach(var helper in itemsToReceiveQueue)
 		{
-			helper.PeekItem();
-			helper.DequeueItem();
-			return;
+			ReceiveItemFromHelper(helper);
 		}
-
-		var player = PlayerManager.sSingleton.GetPlayer(0); // maybe player 2 too?
-		var lootContainer = LootStaticDataContainer.sSingleton;
-
-		var peeked = helper.PeekItem();
-		if (peeked == null)
-			return;
-		Plugin.Logger.LogInfo("relic seeking " + peeked.ItemName);
-		if (DivineRelics.SearchForRelicByNameAndAddItToPlayer(peeked.ItemName, lootContainer))
-			return;
-		if (Items.Talents.IfIsTalentLearnIt(peeked.ItemName, player))
-			return;
-
-		helper.DequeueItem();
-	}
-
-
-
+        
+    }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Altar.Localization;
 using Archipelago.MultiClient.Net.Helpers;
 using ArchipelagoRandomizer;
 using Talents;
@@ -94,7 +95,6 @@ public static class Talents
 	}
 
 
-
 	private static TalentAsset TurnTalentToAPItem(TalentAsset talentAsset, long item)
 	{
 		if (item == -100)
@@ -103,16 +103,19 @@ public static class Talents
 			APItemsUtils.SetInGameSprite(talentAsset, "icon_");
 			Utils.SetFieldValue(talentAsset, "talent_rarity_", TalentRarities.Generic);
 			// SetAndCycleRarity(talentAsset); // depreciated - if want to revive, change back TalentManager.rune_talent_interval_ to 3
-			// Utils.SetFieldValue(talentAsset, "localized_description_", "Unlucky it gives nothing");
-			// Utils.SetFieldValue(talentAsset, "localized_display_name_", "Empty talent");
-			// Utils.SetFieldValue(talentAsset, "talent_category_", TalentCategory.Other);
+			talentAsset.GetFieldValue<LocalizedText>("localized_display_name_").SetKey("EmptyTalentDisplayName");
+			talentAsset.GetFieldValue<LocalizedText>("localized_description_").SetKey("EmptyTalentDescription");
+			talentAsset.GetFieldValue<LocalizedText>("localized_short_description_").SetKey("EmptyTalentShortDescription");
 			return talentAsset;
 		}
 
 		talentAsset.name = item.ToString();
 		APItemsUtils.SetInGameSprite(talentAsset, "icon_");
-		// Utils.SetFieldValue(talentAsset, "localized_description_", "Menaingful desscription");
-		// Utils.SetFieldValue(talentAsset, "localized_display_name_", "AP Item");
+
+		talentAsset.GetFieldValue<LocalizedText>("localized_display_name_").SetKey($"Location{item}DisplayName");
+		talentAsset.GetFieldValue<LocalizedText>("localized_description_").SetKey($"Location{item}Description");
+		talentAsset.GetFieldValue<LocalizedText>("localized_short_description_").SetKey($"Location{item}ShortDescription");
+
 		// Utils.SetFieldValue(talentAsset, "talent_category_", TalentCategory.Other);
 		// SetAndCycleRarity(talentAsset);
 		Utils.SetFieldValue(talentAsset, "talent_rarity_", TalentRarities.Generic);
@@ -144,7 +147,7 @@ public static class Talents
 		}
 	}
 
-	public static bool IfIsTalentLearnIt(string name, PlayerBase player)
+	public static bool IfIsTalentLearnIt(string name, PlayerBase player, ReceivedItemsHelper helper = null)
 	{
 
 		if (name == null || player == null)
@@ -170,6 +173,8 @@ public static class Talents
 				}
 
 				Plugin.Logger.LogInfo("Received: " + name);
+				if (helper != null)
+					helper.DequeueItem();
 
 				return true;
 			}
@@ -178,9 +183,9 @@ public static class Talents
 		return false;
 	}
 
-    internal static void OnMatrixGenDone(Matrix matrix)
-    {
+	internal static void OnMatrixGenDone(Matrix matrix)
+	{
 		Utils.SetFieldValue(PlayerManager.sSingleton.GetPlayer(0).pTalentManager, "rune_talent_interval_", int.MaxValue); //disable rune talents from appearing, not needed to seek one for each character
 
-    }
+	}
 }
