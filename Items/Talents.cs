@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Altar.Localization;
 using Archipelago.MultiClient.Net.Helpers;
+using Archipelago.MultiClient.Net.Models;
 using ArchipelagoRandomizer;
 using Talents;
 using Zyklus.LevelGeneration;
@@ -61,26 +62,13 @@ public static class Talents
 		//SkillTreeButton.Confirm(); -- hijack for location sake
 	}
 
-	public static void CreateLocationsTalents(ILocationCheckHelper locationCheckHelper)
+	public static void CreateLocationsTalents(List<long> locationList)
 	{
 		List<TalentAsset> list = new();
 
-		if (locationCheckHelper.AllMissingLocations.Count == 0)
-		{
-			Plugin.Logger.LogWarning("no locations found, skipping relics creation");
+		Plugin.Logger.LogInfo("Talents locations: " + locationList.Count);
 
-			for (int i = 0; i < 9; i++) //add 9 blank talents (3 of each type) to prevent crash
-			{
-				list.Add(TurnTalentToAPItem(Plugin.sSingleton.GetInstance(pBlankTalent), -100));
-			}
-
-			Utils.SetFieldValue(LootStaticDataContainer.sSingleton, "available_talents_list_", list);
-			return;
-		}
-
-		Plugin.Logger.LogWarning(locationCheckHelper.AllMissingLocations.Count);
-
-		foreach (var item in locationCheckHelper.AllMissingLocations)
+		foreach (var item in locationList)
 		{
 			Plugin.Logger.LogWarning(item);
 			list.Add(TurnTalentToAPItem(Plugin.sSingleton.GetInstance(pBlankTalent), item));

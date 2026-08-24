@@ -29,7 +29,9 @@ public class TalentButtonSelected : MonoBehaviour
 			{
 				if (eventInfo.pAltarEventFieldName == "on_clicked_")
 				{
-					eventInfo.pAltarEvent.AddTarget(eventTarget);
+					if(eventInfo.pAltarEvent.pTargets == null)
+						eventInfo.pAltarEvent.pTargets = new();
+					eventInfo.pAltarEvent.pTargets.Insert(0,eventTarget);
 				}
 			}
 		}

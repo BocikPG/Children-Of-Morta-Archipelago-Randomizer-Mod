@@ -1,8 +1,10 @@
 
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Archipelago.MultiClient.Net.Models;
 using BepInEx;
 using Items;
 using UnityEngine;
@@ -14,8 +16,9 @@ namespace ArchipelagoRandomizer;
 public class APItemsUtils
 {
 	private static Sprite aPSprite_;
-	private static long base_id_items = 85000; //CHANGE: before release
-	private static long base_id_locations = 87000; //CHANGE: before release
+	private static Sprite aPUISprite_;
+	public static long pItemsId = 85000; //CHANGE: before release
+	public static long pBaseLocationsId = 87000; //CHANGE: before release
 
 	public static void SetInGameSprite<T>(T relic, string fieldName) where T : class
 	{
@@ -29,7 +32,20 @@ public class APItemsUtils
 		relic.SetFieldValue(fieldName, aPSprite_);
 	}
 
-	public static void SetUpAPItems() //generally working, TODO: populate with Archipelago Data (and handle giving out staff)
+	public static void SetUISprite<T>(T relic, string fieldName) where T : class
+	{
+		if (aPUISprite_ == null)
+		{
+			var texture = new Texture2D(73, 79);
+			ImageConversion.LoadImage(texture, File.ReadAllBytes(Paths.PluginPath + @"\ArchipelagoRandomizer\Assets\BinocularsUI.png"));
+			aPUISprite_ = Sprite.Create(texture, new Rect(0, 0, 73, 79), new Vector2(0.5f, 0.5f), 1, 0, SpriteMeshType.FullRect, new Vector4(0, 0, 0, 0));
+			//aPSprite_.textureRectOffset = new Vector2(23.0761f, 20.0761f);
+		}
+
+		relic.SetFieldValue(fieldName, aPUISprite_);
+	}
+
+	public static void SetUpAPItems()
 	{
 		if (!Connection.pSession.Socket.Connected)
 		{
@@ -45,8 +61,26 @@ public class APItemsUtils
 		Items.Talents.BackUpTalents(talents);
 		DivineRelics.BackUpRelics(relics);
 
-		Items.DivineRelics.CreateLocationsRelics(Connection.pSession.Locations);
-		Items.Talents.CreateLocationsTalents(Connection.pSession.Locations);
+		var locations = Connection.pSession.Locations.AllMissingLocations;
+
+		List<long> relicLocIdsList = new();
+		List<long> talentLocIdsList = new();
+
+		foreach (var locId in locations)
+		{
+			if (locId >= pBaseLocationsId + 100 && locId < pBaseLocationsId + 800) //LOCATION_CHANGES: on location changes update this
+			{
+				relicLocIdsList.Add(locId);
+			}
+			else if (locId >= pBaseLocationsId + 800 && locId < pBaseLocationsId + 1500) //LOCATION_CHANGES: on location changes update this
+			{
+				talentLocIdsList.Add(locId);
+			}
+		}
+
+		Items.DivineRelics.CreateLocationsRelics(relicLocIdsList);
+		Items.Talents.CreateLocationsTalents(talentLocIdsList);
+
 
 
 	}
@@ -60,7 +94,7 @@ public class APItemsUtils
 	{
 		if (Connection.pSession == null || Connection.pSession.Locations == null)
 			return;
-		Dictionary<long, Archipelago.MultiClient.Net.Models.ScoutedItemInfo> locations;
+		Dictionary<long, Archipelago.MultiClient.Net.Models.ScoutedItemInfo> locations = new();
 		try
 		{
 			locations = await Connection.pSession.Locations.ScoutLocationsAsync(Archipelago.MultiClient.Net.Enums.HintCreationPolicy.None, Connection.pSession.Locations.AllLocations.ToArray());
@@ -68,6 +102,7 @@ public class APItemsUtils
 		}
 		catch
 		{
+			Plugin.Logger.LogWarning("Not connected - localization strings not set");
 			return;
 		}
 
@@ -99,13 +134,13 @@ public class APItemsUtils
 			}
 			else
 			{
-				if (location.Value.LocationId >= base_id_locations + 100 && location.Value.LocationId < base_id_locations + 800)
+				if (location.Value.LocationId >= pBaseLocationsId + 100 && location.Value.LocationId < pBaseLocationsId + 800)
 				{
 					locRegions.Add("DivineRelic");
 					locRegions.Add("DivineRelic");
 					locRegions.Add("DivineRelic");
 				}
-				else if (location.Value.LocationId >= base_id_locations + 800 && location.Value.LocationId < base_id_locations + 1500)
+				else if (location.Value.LocationId >= pBaseLocationsId + 800 && location.Value.LocationId < pBaseLocationsId + 1500)
 				{
 					locRegions.Add("Talent");
 					locRegions.Add("Talent");
@@ -126,7 +161,7 @@ public class APItemsUtils
 			locFields.Add("DisplayName");
 
 			locKeys.Add(locationBase + "Description");
-			locNames.Add(location.Value.ItemDisplayName + " for " + location.Value.Player + " in " + location.Value.ItemGame);
+			locNames.Add(location.Value.ItemDisplayName + " for " + location.Value.Player.Name + " in " + location.Value.ItemGame);
 			locFields.Add("Description");
 
 			locKeys.Add(locationBase + "ShortDescription");

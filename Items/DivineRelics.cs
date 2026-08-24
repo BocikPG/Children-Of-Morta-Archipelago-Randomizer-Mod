@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Altar.Localization;
 using Archipelago.MultiClient.Net.Helpers;
+using Archipelago.MultiClient.Net.Models;
 using ArchipelagoRandomizer;
 using UnityEngine;
 using Zyklus;
@@ -30,27 +31,18 @@ public static class DivineRelics
 		}
 	}
 
-	public static void CreateLocationsRelics(ILocationCheckHelper locationCheckHelper)
+	public static void CreateLocationsRelics(List<long> locationsList)
 	{
 		List<DivineRelicHandle> list = new();
 
-		if (locationCheckHelper.AllMissingLocations.Count == 0)
+		Plugin.Logger.LogInfo("Relics stands: " + locationsList.Count);
+
+		foreach (var loc in locationsList)
 		{
-			Plugin.Logger.LogWarning("no locations found, skipping relics creation");
-			LootStaticDataContainer.sSingleton.pAvailableDivineRelics = list;
-			return;
-		}
-
-
-		Plugin.Logger.LogWarning(locationCheckHelper.AllMissingLocations.Count);
-
-		foreach (var item in locationCheckHelper.AllMissingLocations)
-		{
-			Plugin.Logger.LogWarning(item);
 			List<DivineRelicHandle> tieredRelics = new(); //hack to make endless shop not to crash :3
 			for (int i = 0; i < 3; i++)
 			{
-				tieredRelics.Add(TurnRelicToAPItem(Plugin.sSingleton.GetInstance(pDivineRelicBlankHandle), item, i));
+				tieredRelics.Add(TurnRelicToAPItem(Plugin.sSingleton.GetInstance(pDivineRelicBlankHandle), loc, i));
 			}
 			SetTierHandlers(tieredRelics);
 			foreach (var relic in tieredRelics)
@@ -72,31 +64,41 @@ public static class DivineRelics
 	{
 		List<DivineRelicHandle> shopDecoyList = new();
 
-		TurnRelicToBlankItem(shopDecoyList, pDivineRelicBlankHandle, "APItemBlankRelicDisplayName", "APItemBlankRelicDescription", "APItemBlankRelicShortDescription");
-		TurnRelicToBlankItem(shopDecoyList, pDivineRelicBlankHandle, "APItemBlankRelicDisplayName", "APItemBlankRelicDescription", "APItemBlankRelicShortDescription");
-		TurnRelicToBlankItem(shopDecoyList, pDivineRelicBlankHandle, "APItemBlankRelicDisplayName", "APItemBlankRelicDescription", "APItemBlankRelicShortDescription");
-		TurnRelicToBlankItem(shopDecoyList, pDivineRelicBlankHandle, "APItemBlankRelicDisplayName", "APItemBlankRelicDescription", "APItemBlankRelicShortDescription");
-		TurnRelicToBlankItem(shopDecoyList, pDivineRelicUsableBlankDecoyHandle, "APItemBlankRelicDisplayName", "APItemBlankRelicDescription", "APItemBlankRelicShortDescription");
-		TurnRelicToBlankItem(shopDecoyList, pDivineRelicUsableBlankDecoyHandle, "APItemBlankRelicDisplayName", "APItemBlankRelicDescription", "APItemBlankRelicShortDescription");
-		TurnRelicToBlankItem(shopDecoyList, pDivineRelicUsableBlankDecoyHandle, "APItemBlankRelicDisplayName", "APItemBlankRelicDescription", "APItemBlankRelicShortDescription");
-		TurnRelicToBlankItem(shopDecoyList, pDivineRelicUsableBlankDecoyHandle, "APItemBlankRelicDisplayName", "APItemBlankRelicDescription", "APItemBlankRelicShortDescription");
+		ShopDecoy(shopDecoyList, false);
+		ShopDecoy(shopDecoyList, false);
+		ShopDecoy(shopDecoyList, false);
+		ShopDecoy(shopDecoyList, false);
+
+		ShopDecoy(shopDecoyList, true);
+		ShopDecoy(shopDecoyList, true);
+		ShopDecoy(shopDecoyList, true);
+		ShopDecoy(shopDecoyList, true);
 
 		return shopDecoyList;
+	}
 
-		static void TurnRelicToBlankItem(List<DivineRelicHandle> shopDecoyList, DivineRelicHandle prefab, string displayNameKey, string descriptionKey, string shortDescriptionKey)
+	private static void ShopDecoy(List<DivineRelicHandle> list, bool is_usable)
+	{
+		if (is_usable)
+			TurnRelicToBlankItem(list, pDivineRelicBlankHandle, "APItemBlankRelicDisplayName", "APItemBlankRelicDescription", "APItemBlankRelicShortDescription");
+		else
+			TurnRelicToBlankItem(list, pDivineRelicUsableBlankDecoyHandle, "APItemBlankRelicDisplayName", "APItemBlankRelicDescription", "APItemBlankRelicShortDescription");
+	}
+
+	private static void TurnRelicToBlankItem(List<DivineRelicHandle> shopDecoyList, DivineRelicHandle prefab, string displayNameKey, string descriptionKey, string shortDescriptionKey)
+	{
+		List<DivineRelicHandle> tieredRelics = new();
+		for (int i = 0; i < 3; i++)
 		{
-			List<DivineRelicHandle> tieredRelics = new();
-			for (int i = 0; i < 3; i++)
-			{
-				tieredRelics.Add(TurnRelicToAPItem(Plugin.sSingleton.GetInstance(prefab), -100, i));
-			}
-			SetTierHandlers(tieredRelics);
-			foreach (var rel in tieredRelics)
-			{
-				shopDecoyList.Add(rel);
-			}
+			tieredRelics.Add(TurnRelicToAPItem(Plugin.sSingleton.GetInstance(prefab), -100, i));
+		}
+		SetTierHandlers(tieredRelics);
+		foreach (var rel in tieredRelics)
+		{
+			shopDecoyList.Add(rel);
 		}
 	}
+
 
 	public static void SetTierHandlers(List<DivineRelicHandle> tieredRelics)
 	{
@@ -113,7 +115,9 @@ public static class DivineRelics
 	{
 		relic.name = apItemId.ToString();
 		APItemsUtils.SetInGameSprite(relic, "ingame_sprite_");
+		APItemsUtils.SetUISprite(relic, "ui_sprite_");
 		Utils.SetFieldValue<List<SpritePair>>(relic, "conditional_ingame_sprite_list_", null);
+		Utils.SetFieldValue<List<SpritePair>>(relic, "conditional_ui_sprite_list_", null);
 
 		relic.GetFieldValue<LocalizedText>("localized_display_name_").SetKey($"Location{apItemId}DisplayName");
 		relic.GetFieldValue<LocalizedText>("localized_description_").SetKey($"Location{apItemId}Description");
@@ -132,23 +136,18 @@ public static class DivineRelics
 
 		if (long.TryParse(divine_relic.pHandle.name, out var id))
 		{
+			if (id == -100)
+			{
+				return;
+			}
 			try
 			{
-				//PlayerManager.sSingleton.GetPlayer(0).pDivineRelicContainer.RemovePassiveDiniveRelic(divine_relic); //remove from pool, not from player...
+				PlayerManager.sSingleton.GetPlayer(0).pDivineRelicContainer.RemovePassiveDiniveRelic(divine_relic); //remove from pool, not from player...
 				LootStaticDataContainer.sSingleton.RemoveDivineRelicVariationsFromList(divine_relic.pHandle);
 			}
 			catch { }
 			Connection.pSession.Locations.CompleteLocationChecks(id);
 		}
-		if (divine_relic.pHandle.name == "decoy")
-		{
-			try
-			{
-				PlayerManager.sSingleton.GetPlayer(0).pDivineRelicContainer.RemovePassiveDiniveRelic(divine_relic);
-			}
-			catch { }
-		}
-
 
 	}
 
@@ -157,6 +156,10 @@ public static class DivineRelics
 		Plugin.Logger.LogInfo("Found: " + current_divine_relic.pHandle.name);
 		if (long.TryParse(current_divine_relic.pHandle.name, out var id))
 		{
+			if (id == -100)
+			{
+				return;
+			}
 			Plugin.Logger.LogInfo("relic ID: " + id);
 			try
 			{
@@ -165,14 +168,6 @@ public static class DivineRelics
 			}
 			catch { }
 			Connection.pSession.Locations.CompleteLocationChecks(id);
-		}
-		if (current_divine_relic.pHandle.name == "decoy")
-		{
-			try
-			{
-				PlayerManager.sSingleton.GetPlayer(0).pDivineRelicContainer.RemoveUsableDivineRelic(slot);
-			}
-			catch { }
 		}
 
 	}

@@ -1,10 +1,19 @@
 using System;
 using System.Collections.Generic;
 using Altar.Events;
+using Altar.HFSM;
+using Altar.Pool;
+using Archipelago.MultiClient.Net;
+using Archipelago.MultiClient.Net.Enums;
+using Archipelago.MultiClient.Net.Exceptions;
 using ArchipelagoRandomizer;
 using Items;
+using Talents;
 using UnityEngine;
+using Zyklus;
+using Zyklus.GameManager;
 using Zyklus.Home;
+using Zyklus.Loot;
 using Zyklus.Managers;
 using Zyklus.Morta;
 using Zyklus.UI;
@@ -56,7 +65,139 @@ public class OnMorningStarted : MonoBehaviour
             }
         }
 
+        GameFlowInterface.sSingleton.GetFieldValue<UIManagerHFSM>("ui_manager_hfsm_").pHFSM.PreEventPush += OnUIStateChangePrePush;
+        GameFlowInterface.sSingleton.GetFieldValue<UIManagerHFSM>("ui_manager_hfsm_").pHFSM.PostEventPush += OnUIStateChangePostPush;
+
         SetUpLocalization();
+        SetUpEndlessShop();
+    }
+
+    private static void SetUpEndlessShop()
+    {
+        var array = EndlessShopManager.sSingleton.GetFieldValue<EndlessShopItemPrice[]>("item_price_");
+        foreach(var entry in array)
+        {
+            if(entry.pItem1 == EndlessShopItemType.DivineRelic)
+            {
+                entry.pItem3 = 99999;
+            }
+        }
+        EndlessShopManager.sSingleton.SetFieldValue<EndlessShopItemPrice[]>("item_price_", array);
+    }
+
+    private static void OnUIStateChangePrePush(HFSM hfsm, int event_code, object sender, ListPoolInstance<object> event_parameters)
+    {
+        var session = Connection.pSession;
+
+        if (event_code == (int)UIManager_EventsEnum.SHOWING_SESSION_END_REQUESTED) //if end screen is to be shown
+        {
+            if ((int)event_parameters.pList[0] == (int)GameRunFinishReasonEnum.Win) //reason - of the event, game won in this case
+            {
+                Plugin.Logger.LogInfo("Win detected");
+                var currentCharacter = PlayerManager.sSingleton.pLocalPlayerCharacters[0];
+
+                Plugin.Logger.LogInfo(currentCharacter.ToString());
+
+                try
+                {
+                    session.DataStorage["ChildrenOfMortaTimesWon"].Initialize(0);
+                    session.DataStorage["ChildrenOfMortaTimesWon"] += 1;
+
+                    session.Locations.CompleteLocationChecks(APItemsUtils.pBaseLocationsId + (int)currentCharacter, APItemsUtils.pBaseLocationsId + 8 + (int)Connection.pSession.DataStorage["ChildrenOfMortaTimesWon"]);
+
+                    var aPSettings = (Dictionary<string, int>)session.DataStorage.GetSlotData()["settings"];
+                    if (aPSettings["isEndlessMode"] == 1)
+                    {
+                        //TODO: campaign implementation
+                        int numberOfCharacters = 8; // depends if campaign or not 
+                        if (aPSettings["goalEndless"] == 0) // defeat_boss_with_every_family_member
+                        {
+                            CheckIfGoalIsCompleted(session, 0, numberOfCharacters);
+                        }
+                        else if (aPSettings["goalEndless"] == 1) // defeat_boss_X_times
+                        {
+                            var timesToDefeat = aPSettings["defeatBossXTimes"];
+                            CheckIfGoalIsCompleted(session, 8, timesToDefeat);
+                        }
+                    }
+                }
+                catch (ArchipelagoSocketClosedException)
+                {
+                    Plugin.Logger.LogError("Winning location failed to send - client not connected");
+                }
+
+            }
+            else if (event_code == (int)UIManager_EventsEnum.SHOWING_ENDLESS_SHOP_MENU_REQUESTED)
+            {
+                var list = EndlessShopManager.sSingleton.pSelectedItems;
+                foreach (var item in list)
+                {
+                    if (long.TryParse(item.GetName(), out var result))
+                    {
+                        session.Hints.CreateHints(HintStatus.Found, result);
+                    }
+                }
+            }
+
+            Plugin.Logger.LogInfo("End of game session");
+
+        }
+        Plugin.Logger.LogInfo("ui change triggered " + event_code);
+    }
+    private static void OnUIStateChangePostPush(HFSM hfsm, int event_code, object sender, ListPoolInstance<object> event_parameters)
+    {
+        var session = Connection.pSession;
+
+        if (event_code == (int)UIManager_EventsEnum.SHOWING_TALENT_SELECT_MENU_REQUESTED) // talent select menu show  
+        {
+            if (PlayerManager.sSingleton.GetPlayer(0).pTalentManager.pAvailableTalentCount > 0)
+            {
+                var list = TalentSelectMenu.sSingleton.GetFieldValue<List<TalentAsset>>("talent_list_");
+                foreach (var item in list)
+                {
+                    if (long.TryParse(item.name, out var result))
+                    {
+                        session.Hints.CreateHints(HintStatus.Found, result);
+                    }
+                }
+            }
+
+            // if (PlayerManager.sSingleton.GetPlayer(1)?.pTalentManager.pAvailableTalentCount > 0)
+            // {
+            //     var list = TalentSelectMenu.sSingleton.GetFieldValue<List<TalentAsset>>("talent_list_2_");
+            //     foreach (var item in list)
+            //     {
+            //         if (long.TryParse(item.name, out var result))
+            //         {
+            //             session.Hints.CreateHints(HintStatus.Found, result);
+            //         }
+            //     }
+            // }
+        }
+        Plugin.Logger.LogInfo("ui change triggered " + event_code);
+
+    }
+
+    private static void CheckIfGoalIsCompleted(ArchipelagoSession session, int firstIdOffset, int iterations)
+    {
+        bool goalCompleted = true;
+        for (int i = 0; i < iterations; i++)
+        {
+            if (session.Locations.AllLocationsChecked.Contains(APItemsUtils.pBaseLocationsId + firstIdOffset + i))
+            {
+                continue;
+            }
+            else
+            {
+                goalCompleted = false;
+                break;
+            }
+        }
+        if (goalCompleted)
+        {
+            session.SetClientState(Archipelago.MultiClient.Net.Enums.ArchipelagoClientState.ClientGoal);
+        }
+
     }
 
     private static void SetUpLocalization()
@@ -78,7 +219,7 @@ public class OnMorningStarted : MonoBehaviour
     {
         if (ProfileManager.sSingleton.pGameMode != GameMode.Endless)
             return;
-            
+
         SetUpLocalization();
 
         SetUpPlayableCharacters();

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using BepInEx;
 using BepInEx.Logging;
 using Items;
+using Zyklus.GameManager;
 using Zyklus.Home;
 using Zyklus.LevelGeneration;
 using Zyklus.Loot;
@@ -48,7 +49,7 @@ public class Plugin : BaseUnityPlugin
     IEnumerator WaitAndInit()
     {
 
-        while (ZyklusSceneManager.sSingleton == null || PlayerManager.sSingleton == null || HomeManager.sSingleton == null)
+        while (ZyklusSceneManager.sSingleton == null || PlayerManager.sSingleton == null || HomeManager.sSingleton == null || GameFlowInterface.sSingleton == null || EndlessShopManager.sSingleton == null)
         {
             // Wait for the next frame
             yield return null;
@@ -146,7 +147,10 @@ public class Plugin : BaseUnityPlugin
 
         //basea.player_.pConsumableManager.ConsumableObtained(basea);
 
-                //LootStaticDataContainer.sSingleton.AddToDropList(); //immediately (in update) drops loot on floor
+        //LootStaticDataContainer.sSingleton.AddToDropList(); //immediately (in update) drops loot on floor
+
+
+        //GameStats.endless_mode_total_side_objectives_done_ //can be check at the matrix done, to add location for side objectives
     }
 
 

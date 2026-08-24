@@ -4,6 +4,7 @@ using ArchipelagoRandomizer;
 using Zyklus.LevelGeneration;
 using Zyklus.Loot;
 using Zyklus.Managers;
+using Zyklus.UI;
 
 namespace Items;
 
@@ -31,8 +32,12 @@ public static class OnMatrixGenDone
 
 		// save old value and allow items to spread
 		bool savedValue = lootContainer.GetFieldValue<bool>("should_throw_");//to spread the items
+
 		if (!savedValue)
 			lootContainer.SetFieldValue("should_throw_", true);
+
+		var tempVolumeStorage = AudioOptionsMenu.sSingleton.pSfxVolume;
+		AudioOptionsMenu.sSingleton.SetSFXBusVolume(0,false);
 
 		//give items to player
 		foreach (var item in Connection.pSession.Items.AllItemsReceived)
@@ -54,5 +59,7 @@ public static class OnMatrixGenDone
 		// restore old value
 		if (!savedValue)
 			lootContainer.SetFieldValue("should_throw_", savedValue);
+
+		AudioOptionsMenu.sSingleton.SetSFXBusVolume(tempVolumeStorage,false);
 	}
 }
