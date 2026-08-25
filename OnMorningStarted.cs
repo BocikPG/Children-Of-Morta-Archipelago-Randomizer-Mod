@@ -8,6 +8,7 @@ using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Exceptions;
 using ArchipelagoRandomizer;
 using Items;
+using Newtonsoft.Json.Linq;
 using Talents;
 using UnityEngine;
 using Zyklus;
@@ -75,9 +76,9 @@ public class OnMorningStarted : MonoBehaviour
     private static void SetUpEndlessShop()
     {
         var array = EndlessShopManager.sSingleton.GetFieldValue<EndlessShopItemPrice[]>("item_price_");
-        foreach(var entry in array)
+        foreach (var entry in array)
         {
-            if(entry.pItem1 == EndlessShopItemType.DivineRelic)
+            if (entry.pItem1 == EndlessShopItemType.DivineRelic)
             {
                 entry.pItem3 = 99999;
             }
@@ -101,22 +102,24 @@ public class OnMorningStarted : MonoBehaviour
                 try
                 {
                     session.DataStorage["ChildrenOfMortaTimesWon"].Initialize(0);
-                    session.DataStorage["ChildrenOfMortaTimesWon"] += 1;
+                    session.DataStorage["ChildrenOfMortaTimesWon"] += (long)1;
 
-                    session.Locations.CompleteLocationChecks(APItemsUtils.pBaseLocationsId + (int)currentCharacter, APItemsUtils.pBaseLocationsId + 8 + (int)Connection.pSession.DataStorage["ChildrenOfMortaTimesWon"]);
+                    long number = (long)Connection.pSession.DataStorage["ChildrenOfMortaTimesWon"];
+                    session.Locations.CompleteLocationChecks(APItemsUtils.pBaseLocationsId + (long)currentCharacter, APItemsUtils.pBaseLocationsId + 8 + number);
 
-                    var aPSettings = (Dictionary<string, int>)session.DataStorage.GetSlotData()["settings"];
-                    if (aPSettings["isEndlessMode"] == 1)
+                    var aPSettings = session.DataStorage.GetSlotData()["settings"] as JObject;
+                    if (aPSettings.Value<int>("isEndlessMode") == 1)
                     {
                         //TODO: campaign implementation
                         int numberOfCharacters = 8; // depends if campaign or not 
-                        if (aPSettings["goalEndless"] == 0) // defeat_boss_with_every_family_member
+                        if (aPSettings.Value<int>("goalEndless") == 0) // defeat_boss_with_every_family_member
                         {
                             CheckIfGoalIsCompleted(session, 0, numberOfCharacters);
                         }
-                        else if (aPSettings["goalEndless"] == 1) // defeat_boss_X_times
+                        else if (aPSettings.Value<int>("goalEndless") == 1) // defeat_boss_X_times
                         {
-                            var timesToDefeat = aPSettings["defeatBossXTimes"];
+                            Plugin.Logger.LogInfo("endless");
+                            var timesToDefeat = aPSettings.Value<int>("defeatBossXTimes");
                             CheckIfGoalIsCompleted(session, 8, timesToDefeat);
                         }
                     }
@@ -178,24 +181,27 @@ public class OnMorningStarted : MonoBehaviour
 
     }
 
-    private static void CheckIfGoalIsCompleted(ArchipelagoSession session, int firstIdOffset, int iterations)
+    private static void CheckIfGoalIsCompleted(ArchipelagoSession session, long firstIdOffset, long iterations)
     {
         bool goalCompleted = true;
         for (int i = 0; i < iterations; i++)
         {
             if (session.Locations.AllLocationsChecked.Contains(APItemsUtils.pBaseLocationsId + firstIdOffset + i))
             {
+                //Plugin.Logger.LogInfo(APItemsUtils.pBaseLocationsId + firstIdOffset + i + " found");
                 continue;
             }
             else
             {
+                //Plugin.Logger.LogInfo(APItemsUtils.pBaseLocationsId + firstIdOffset + i + " not found");
                 goalCompleted = false;
                 break;
             }
         }
         if (goalCompleted)
         {
-            session.SetClientState(Archipelago.MultiClient.Net.Enums.ArchipelagoClientState.ClientGoal);
+            Plugin.Logger.LogWarning("GOAL COMPLETED!");
+            session.SetClientState(ArchipelagoClientState.ClientGoal);
         }
 
     }

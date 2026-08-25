@@ -55,16 +55,16 @@ public static class Utils
 		AddTranslationToLocalizationData(exist_table, sizeTable, table, "APItemTalentShortDescription", "Talent", "ShortDescription", "APItemDesc");
 
 		AddTranslationToLocalizationData(exist_table, sizeTable, table, "EmptyTalentDisplayName", "Talent", "DisplayName", "Empty talent");
-		AddTranslationToLocalizationData(exist_table, sizeTable, table, "EmptyTalentShortDescription", "Talent", "Description", "@DON'T BUY THIS@ Unlucky it gives nothing");
-		AddTranslationToLocalizationData(exist_table, sizeTable, table, "EmptyTalentDescription", "Talent", "ShortDescription", "@DON'T BUY THIS@ Unlucky it gives nothing, but it make game not crash - lose-win?");
+		AddTranslationToLocalizationData(exist_table, sizeTable, table, "EmptyTalentShortDescription", "Talent", "Description", "Unlucky it gives nothing");
+		AddTranslationToLocalizationData(exist_table, sizeTable, table, "EmptyTalentDescription", "Talent", "ShortDescription", "Unlucky it gives nothing, but it make game not crash - lose-win?");
 
 		AddTranslationToLocalizationData(exist_table, sizeTable, table, "APItemRelicDisplayName", "DivineRelic", "DisplayName", "APItem");
 		AddTranslationToLocalizationData(exist_table, sizeTable, table, "APItemRelicDescription", "DivineRelic", "Description", "APItemDesc");
 		AddTranslationToLocalizationData(exist_table, sizeTable, table, "APItemRelicShortDescription", "DivineRelic", "ShortDescription", "APItemDesc");
 
 		AddTranslationToLocalizationData(exist_table, sizeTable, table, "Location-100DisplayName", "DivineRelic", "DisplayName", "Blank Relic");
-		AddTranslationToLocalizationData(exist_table, sizeTable, table, "Location-100ShortDescription", "DivineRelic", "Description", "@DON'T BUY THIS@ It does nothing - really");
-		AddTranslationToLocalizationData(exist_table, sizeTable, table, "Location-100Description", "DivineRelic", "ShortDescription", "@DON'T BUY THIS@ It polluted the pool, but made game not crush - fair deal if you ask me");
+		AddTranslationToLocalizationData(exist_table, sizeTable, table, "Location-100ShortDescription", "DivineRelic", "Description", "It does nothing - really");
+		AddTranslationToLocalizationData(exist_table, sizeTable, table, "Location-100Description", "DivineRelic", "ShortDescription", "It polluted the pool, but made game not crush - fair deal if you ask me");
 
 		for(int i=0;i<keys.Count;i++)
 		{

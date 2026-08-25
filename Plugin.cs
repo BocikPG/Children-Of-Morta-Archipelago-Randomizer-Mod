@@ -151,6 +151,11 @@ public class Plugin : BaseUnityPlugin
 
 
         //GameStats.endless_mode_total_side_objectives_done_ //can be check at the matrix done, to add location for side objectives
+        //crashes on receiving:
+        //  Contact Damage divine relic - Inventory item handle
+        //  Blood Rush Divine Relic - Tier 3 - Inventory item handle
+        //  JoeyWhirlwindFONRune ??
+        //  Crit Chance Relic - Tier 3 - Inventory item handle
     }
 
 

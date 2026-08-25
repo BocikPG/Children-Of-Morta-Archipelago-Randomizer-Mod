@@ -142,7 +142,7 @@ public static class DivineRelics
 			}
 			try
 			{
-				PlayerManager.sSingleton.GetPlayer(0).pDivineRelicContainer.RemovePassiveDiniveRelic(divine_relic); //remove from pool, not from player...
+				// PlayerManager.sSingleton.GetPlayer(0).pDivineRelicContainer.RemovePassiveDiniveRelic(relic); //remove from pool, not from player... //apparently not necessary (and crashes the game)
 				LootStaticDataContainer.sSingleton.RemoveDivineRelicVariationsFromList(divine_relic.pHandle);
 			}
 			catch { }
@@ -163,7 +163,7 @@ public static class DivineRelics
 			Plugin.Logger.LogInfo("relic ID: " + id);
 			try
 			{
-				PlayerManager.sSingleton.GetPlayer(0).pDivineRelicContainer.RemoveUsableDivineRelic(slot);
+				//PlayerManager.sSingleton.GetPlayer(0).pDivineRelicContainer.RemoveUsableDivineRelic(slot); //apparently not necessary
 				LootStaticDataContainer.sSingleton.RemoveDivineRelicVariationsFromList(current_divine_relic.pHandle);
 			}
 			catch { }
@@ -184,7 +184,9 @@ public static class DivineRelics
 			//Plugin.Logger.LogInfo("relic comparing " + relic.name);
 			if (relic.name.StartsWith(relicName))
 			{
-				Plugin.Logger.LogInfo("relic found " + relic.name);
+				if(!isReceivingMany)
+					Plugin.Logger.LogInfo("relic found " + relic.name);
+
 				if (!relic.GetIsUsable())
 				{
 					try
@@ -214,11 +216,15 @@ public static class DivineRelics
 					//PlayerManager.sSingleton.GetPlayer(0).pDivineRelicContainer.AddUsableDivineRelic(obj.GetComponent<UsableDivineRelicBase>());
 				}
 
-				Plugin.Logger.LogInfo("Received: " + relicName);
+				if(!isReceivingMany)
+					Plugin.Logger.LogInfo("Received: " + relicName);
+					
 				if (helper != null)
 				{
 					helper.DequeueItem();
 				}
+
+				ShopDecoy(LootStaticDataContainer.sSingleton.pAvailableDivineRelics, relic.GetIsUsable());
 
 				return true;
 			}
