@@ -3,9 +3,7 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
-using Altar.Data;
 using Altar.Localization;
-using Archipelago.MultiClient.Net.MessageLog.Messages;
 using ArchipelagoRandomizer;
 
 
@@ -43,41 +41,41 @@ public static class Utils
 	{
 		if (fired)
 			return;
-		var exist_table = LocalizedTextUtility.sSingleton.pBank.pTable.GetFieldValue<List<List<float>>>("table_"); //I guess this checks if translation is in given language - 4 is ENG
+		var transVersionTable = LocalizedTextUtility.sSingleton.pBank.pTable.GetFieldValue<List<List<float>>>("table_"); // It can be all 0 afaik (it's probably for internal processing)
 		var sizeTable = LocalizedTextUtility.sSingleton.pBank.pTable.GetFieldValue<List<int>>("rows_key_");
 		var table = LocalizedTextUtility.sSingleton.pBank.pTable.GetFieldValue<Dictionary<string, List<string>>>("table_string_dict_");
 		Plugin.Logger.LogMessage(keys.Count);
-		Plugin.Logger.LogMessage(exist_table.Count);
+		Plugin.Logger.LogMessage(transVersionTable.Count);
 		Plugin.Logger.LogMessage(table.Count);
 
-		AddTranslationToLocalizationData(exist_table, sizeTable, table, "APItemTalentDisplayName", "Talent", "DisplayName", "APItem");
-		AddTranslationToLocalizationData(exist_table, sizeTable, table, "APItemTalentDescription", "Talent", "Description", "APItemDesc");
-		AddTranslationToLocalizationData(exist_table, sizeTable, table, "APItemTalentShortDescription", "Talent", "ShortDescription", "APItemDesc");
+		AddTranslationToLocalizationData(transVersionTable, sizeTable, table, "APItemTalentDisplayName", "Talent", "DisplayName", "APItem");
+		AddTranslationToLocalizationData(transVersionTable, sizeTable, table, "APItemTalentDescription", "Talent", "Description", "APItemDesc");
+		AddTranslationToLocalizationData(transVersionTable, sizeTable, table, "APItemTalentShortDescription", "Talent", "ShortDescription", "APItemDesc");
 
-		AddTranslationToLocalizationData(exist_table, sizeTable, table, "EmptyTalentDisplayName", "Talent", "DisplayName", "Empty talent");
-		AddTranslationToLocalizationData(exist_table, sizeTable, table, "EmptyTalentShortDescription", "Talent", "Description", "Unlucky it gives nothing");
-		AddTranslationToLocalizationData(exist_table, sizeTable, table, "EmptyTalentDescription", "Talent", "ShortDescription", "Unlucky it gives nothing, but it make game not crash - lose-win?");
+		AddTranslationToLocalizationData(transVersionTable, sizeTable, table, "EmptyTalentDisplayName", "Talent", "DisplayName", "Empty talent");
+		AddTranslationToLocalizationData(transVersionTable, sizeTable, table, "EmptyTalentShortDescription", "Talent", "Description", "Unlucky it gives nothing");
+		AddTranslationToLocalizationData(transVersionTable, sizeTable, table, "EmptyTalentDescription", "Talent", "ShortDescription", "Unlucky it gives nothing, but it make game not crash - lose-win?");
 
-		AddTranslationToLocalizationData(exist_table, sizeTable, table, "APItemRelicDisplayName", "DivineRelic", "DisplayName", "APItem");
-		AddTranslationToLocalizationData(exist_table, sizeTable, table, "APItemRelicDescription", "DivineRelic", "Description", "APItemDesc");
-		AddTranslationToLocalizationData(exist_table, sizeTable, table, "APItemRelicShortDescription", "DivineRelic", "ShortDescription", "APItemDesc");
+		AddTranslationToLocalizationData(transVersionTable, sizeTable, table, "APItemRelicDisplayName", "DivineRelic", "DisplayName", "APItem");
+		AddTranslationToLocalizationData(transVersionTable, sizeTable, table, "APItemRelicDescription", "DivineRelic", "Description", "APItemDesc");
+		AddTranslationToLocalizationData(transVersionTable, sizeTable, table, "APItemRelicShortDescription", "DivineRelic", "ShortDescription", "APItemDesc");
 
-		AddTranslationToLocalizationData(exist_table, sizeTable, table, "Location-100DisplayName", "DivineRelic", "DisplayName", "Blank Relic");
-		AddTranslationToLocalizationData(exist_table, sizeTable, table, "Location-100ShortDescription", "DivineRelic", "Description", "It does nothing - really");
-		AddTranslationToLocalizationData(exist_table, sizeTable, table, "Location-100Description", "DivineRelic", "ShortDescription", "It polluted the pool, but made game not crush - fair deal if you ask me");
+		AddTranslationToLocalizationData(transVersionTable, sizeTable, table, "Location-100DisplayName", "DivineRelic", "DisplayName", "Blank Relic");
+		AddTranslationToLocalizationData(transVersionTable, sizeTable, table, "Location-100ShortDescription", "DivineRelic", "Description", "It does nothing - really");
+		AddTranslationToLocalizationData(transVersionTable, sizeTable, table, "Location-100Description", "DivineRelic", "ShortDescription", "It polluted the pool, but made game not crush - fair deal if you ask me");
 
 		for(int i=0;i<keys.Count;i++)
 		{
-			AddTranslationToLocalizationData(exist_table, sizeTable, table, keys[i], region[i], field[i], name[i]);
+			AddTranslationToLocalizationData(transVersionTable, sizeTable, table, keys[i], region[i], field[i], name[i]);
 		}
 		fired = true;
-		Plugin.Logger.LogMessage(exist_table.Count);
+		Plugin.Logger.LogMessage(transVersionTable.Count);
 		Plugin.Logger.LogMessage(table.Count);
 	}
 
-	public static void AddTranslationToLocalizationData(List<List<float>> exist_table, List<int> sizeTable, Dictionary<string, List<string>> table, string key, string region, string field, string name)
+	public static void AddTranslationToLocalizationData(List<List<float>> transVersionTable, List<int> sizeTable, Dictionary<string, List<string>> table, string key, string region, string field, string name)
 	{
-		exist_table.Add(new List<float>([0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]));
+		transVersionTable.Add(new List<float>([0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]));
 		sizeTable.Add(-1);
 		table.Add(key, new List<string>([key, region, field, "DESC", name, "1", name, "1", name, "1", name, "1", name, "1", name, "1", name, "1", name, "1", name, "1", name, "1", name, "1", name, "1", name, "1"]));
 	}

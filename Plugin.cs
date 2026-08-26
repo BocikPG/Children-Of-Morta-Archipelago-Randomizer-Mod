@@ -1,11 +1,11 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using ArchipelagoRandomizer.EventHandlers;
+using ArchipelagoRandomizer.Items;
 using BepInEx;
 using BepInEx.Logging;
-using Items;
 using Zyklus.GameManager;
 using Zyklus.Home;
-using Zyklus.LevelGeneration;
 using Zyklus.Loot;
 using Zyklus.Managers;
 using Zyklus.UI;
@@ -20,11 +20,12 @@ public class Plugin : BaseUnityPlugin
 
     public static Plugin sSingleton;
     public Connection pConnection;
+    public Items.Items pItems;
 
-    public void Update()
-    {
-        DebugPlugin.Update();
-    }
+    // public void Update() //DEBUG: remove if want to debug - commented for minor performance boost :)
+    // {
+    //     DebugPlugin.Update();
+    // }
 
     private void Awake()
     {
@@ -36,12 +37,12 @@ public class Plugin : BaseUnityPlugin
 
         if (sSingleton != this)
             sSingleton = this;
+            
+        pItems = new();
 
         pConnection = new();
         pConnection.CreateSession("localhost:38281").Connect("PlayerName");
 
-        Logger.LogError(Connection.pSession.ConnectionInfo.Game);
-        Logger.LogError(Connection.pLogin.Successful);
         // var a = CharacterSelect.sActiveMenu.pCharacterPanels[0];
     }
 
@@ -56,15 +57,11 @@ public class Plugin : BaseUnityPlugin
         }
 
         CheatMenu.sSingleton.Show();
-        OnMorningStarted.OnMorningStartedSetUp();
+        OnMorningStarted.OnMorningStartedInit();
         OnMatrixGenDone.SubscribeToMatrixGenDone();
         //ZyklusSceneManager.sSingleton.OnMaterialPlaceChanged += TalentsManager.SetTalents;
         ZyklusSceneManager.sSingleton.OnMaterialPlaceChanged += APItemsUtils.SetUpAPItems;
     }
-
-
-
-
 
     public T GetInstance<T>(T prefab) where T: UnityEngine.Object
     {
@@ -72,15 +69,6 @@ public class Plugin : BaseUnityPlugin
     }
 
     //notes
-
-    public virtual void Endless()
-    {
-        //ProfileManager.sSingleton.pLocalUserData.SetEndlessUnlockState(true); //unlock endless (on game start)
-
-
-        //EndlessRunStats.pBossesKilled;
-        //EndlessRunStats.pChampionsKilled;
-    }
 
     //Info on cutScene end (for new portals unlocks)
     //     [Info   : Unity Log] Begining cutscene skip by user. debug_text=Wind opening sequence - Sequence

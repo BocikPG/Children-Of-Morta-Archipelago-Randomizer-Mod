@@ -1,17 +1,11 @@
-using System.Collections.Generic;
-using ArchipelagoRandomizer;
-using BepInEx.Logging;
-using Talents;
 using UnityEngine;
-using Zyklus.LevelGeneration;
-using Zyklus.Managers;
 
-namespace Items;
+namespace ArchipelagoRandomizer.Items;
 
 public static class DebugPlugin
 {
 
-	public static bool pIsDebug = true;
+	public static bool pIsDebug = false;
 
 	public static void Update()
 	{

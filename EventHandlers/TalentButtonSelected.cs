@@ -1,20 +1,17 @@
-using System;
 using System.Collections.Generic;
-using System.Reflection;
 using Altar.Events;
-using ArchipelagoRandomizer;
 using Talents;
 using UnityEngine;
 using Zyklus.Loot;
-using Zyklus.Managers;
-using Zyklus.Player;
 using Zyklus.UI;
+
+namespace ArchipelagoRandomizer.EventHandlers;
 
 public class TalentButtonSelected : MonoBehaviour
 {
 	private const string _onButtonClickedJSONString = "{\"name\": \"BocikTalentButtonClick\",\"version_\":1,\"target_method_name_\": \"OnTalentButtonClicked\"}";
 
-	public static void SetupTalentButtons()
+	public static void SetUpTalentButtons()
 	{
 		var buttonsList = Utils.GetFieldValue<TalentSelectButton[]>(TalentSelectMenu.sSingleton, "talent_buttons_");
 

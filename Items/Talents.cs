@@ -1,9 +1,6 @@
-using System;
 using System.Collections.Generic;
 using Altar.Localization;
 using Archipelago.MultiClient.Net.Helpers;
-using Archipelago.MultiClient.Net.Models;
-using ArchipelagoRandomizer;
 using Talents;
 using Zyklus.LevelGeneration;
 using Zyklus.Loot;
@@ -11,7 +8,7 @@ using Zyklus.Managers;
 using Zyklus.Player;
 using Zyklus.Stat;
 
-namespace Items;
+namespace ArchipelagoRandomizer.Items;
 
 public static class Talents
 {

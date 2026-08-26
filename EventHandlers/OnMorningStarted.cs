@@ -6,18 +6,18 @@ using Altar.Pool;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Exceptions;
-using ArchipelagoRandomizer;
-using Items;
+using ArchipelagoRandomizer.Items;
 using Newtonsoft.Json.Linq;
 using Talents;
 using UnityEngine;
 using Zyklus;
 using Zyklus.GameManager;
 using Zyklus.Home;
-using Zyklus.Loot;
 using Zyklus.Managers;
 using Zyklus.Morta;
 using Zyklus.UI;
+
+namespace ArchipelagoRandomizer.EventHandlers;
 
 public class OnMorningStarted : MonoBehaviour
 {
@@ -51,26 +51,35 @@ public class OnMorningStarted : MonoBehaviour
         set => locNames_ = value;
     }
 
-    public static void OnMorningStartedSetUp()
+    public static void OnMorningStartedInit()
     {
-        var target = HomeManager.sSingleton.gameObject.AddComponent<OnMorningStarted>();
-        AltarEventTarget eventTarget = JsonUtility.FromJson<AltarEventTarget>(_onMorningStartedEventJSONString); //bypass private constructor
-        eventTarget.pTargetBehaviour = target;
+        HookUpToEvent();
 
-        Debug.LogError(eventTarget.GetDebugText());
-        foreach (var eventInfo in HomeManager.sSingleton.GetAllAltarEvents(true))
-        {
-            if (eventInfo.pAltarEventFieldName == "on_morning_started_")
-            {
-                eventInfo.pAltarEvent.AddTarget(eventTarget);
-            }
-        }
+        ProfileManager.sSingleton.pLocalUserData.SetEndlessUnlockState(true); //unlock endless (on game start)
+
+        TalentButtonSelected.SetUpTalentButtons();
 
         GameFlowInterface.sSingleton.GetFieldValue<UIManagerHFSM>("ui_manager_hfsm_").pHFSM.PreEventPush += OnUIStateChangePrePush;
         GameFlowInterface.sSingleton.GetFieldValue<UIManagerHFSM>("ui_manager_hfsm_").pHFSM.PostEventPush += OnUIStateChangePostPush;
 
         SetUpLocalization();
         SetUpEndlessShop();
+
+        static void HookUpToEvent()
+        {
+            var target = HomeManager.sSingleton.gameObject.AddComponent<OnMorningStarted>();
+            AltarEventTarget eventTarget = JsonUtility.FromJson<AltarEventTarget>(_onMorningStartedEventJSONString); //bypass private constructor
+            eventTarget.pTargetBehaviour = target;
+
+            Debug.LogError(eventTarget.GetDebugText());
+            foreach (var eventInfo in HomeManager.sSingleton.GetAllAltarEvents(true))
+            {
+                if (eventInfo.pAltarEventFieldName == "on_morning_started_")
+                {
+                    eventInfo.pAltarEvent.AddTarget(eventTarget);
+                }
+            }
+        }
     }
 
     private static void SetUpEndlessShop()
@@ -210,7 +219,7 @@ public class OnMorningStarted : MonoBehaviour
     {
         if (!locSet)
         {
-            APItemsUtils.SetLocationsFromAPItems();
+            APItemsUtils.SetLocalizationsFromAPItems();
             if (locKeys_ != null)
             {
                 Utils.AddTranslationsToLocalizationData(locKeys_, locRegions_, locFields_, locNames_);
@@ -229,8 +238,6 @@ public class OnMorningStarted : MonoBehaviour
         SetUpLocalization();
 
         SetUpPlayableCharacters();
-
-        APItemsUtils.SetUpOnMorningStarted();
 
         //UnlockCampaignPortals(); //in endless there are no portals - keeping for maybe one day someone will code it :v
     }

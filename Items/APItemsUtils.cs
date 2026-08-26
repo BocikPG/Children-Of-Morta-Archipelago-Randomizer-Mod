@@ -1,17 +1,13 @@
 
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
-using Archipelago.MultiClient.Net.Models;
+using ArchipelagoRandomizer.EventHandlers;
 using BepInEx;
-using Items;
 using UnityEngine;
 using Zyklus.Loot;
-using Zyklus.Managers;
 
-namespace ArchipelagoRandomizer;
+namespace ArchipelagoRandomizer.Items;
 
 public class APItemsUtils
 {
@@ -58,7 +54,7 @@ public class APItemsUtils
 			return;
 
 
-		Items.Talents.BackUpTalents(talents);
+		Talents.BackUpTalents(talents);
 		DivineRelics.BackUpRelics(relics);
 
 		var locations = Connection.pSession.Locations.AllMissingLocations;
@@ -78,19 +74,11 @@ public class APItemsUtils
 			}
 		}
 
-		Items.DivineRelics.CreateLocationsRelics(relicLocIdsList);
-		Items.Talents.CreateLocationsTalents(talentLocIdsList);
-
-
-
+		DivineRelics.CreateLocationsRelics(relicLocIdsList);
+		Talents.CreateLocationsTalents(talentLocIdsList);
 	}
 
-	public static void SetUpOnMorningStarted()
-	{
-		TalentButtonSelected.SetupTalentButtons();
-	}
-
-	public static async void SetLocationsFromAPItems()
+	public static async void SetLocalizationsFromAPItems()
 	{
 		if (Connection.pSession == null || Connection.pSession.Locations == null)
 			return;

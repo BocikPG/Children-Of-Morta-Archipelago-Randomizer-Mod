@@ -1,17 +1,13 @@
-using System;
 using System.Collections.Generic;
 using Altar.Localization;
 using Archipelago.MultiClient.Net.Helpers;
-using Archipelago.MultiClient.Net.Models;
-using ArchipelagoRandomizer;
 using UnityEngine;
 using Zyklus;
 using Zyklus.DivineRelic;
-using Zyklus.LevelGeneration;
 using Zyklus.Loot;
 using Zyklus.Managers;
 
-namespace Items;
+namespace ArchipelagoRandomizer.Items;
 
 public static class DivineRelics
 {
