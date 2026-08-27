@@ -71,7 +71,7 @@ public class OnMorningStarted : MonoBehaviour
             AltarEventTarget eventTarget = JsonUtility.FromJson<AltarEventTarget>(_onMorningStartedEventJSONString); //bypass private constructor
             eventTarget.pTargetBehaviour = target;
 
-            Debug.LogError(eventTarget.GetDebugText());
+            Plugin.Logger.LogInfo(eventTarget.GetDebugText());
             foreach (var eventInfo in HomeManager.sSingleton.GetAllAltarEvents(true))
             {
                 if (eventInfo.pAltarEventFieldName == "on_morning_started_")

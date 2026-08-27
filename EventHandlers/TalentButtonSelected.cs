@@ -21,7 +21,7 @@ public class TalentButtonSelected : MonoBehaviour
 			AltarEventTarget eventTarget = JsonUtility.FromJson<AltarEventTarget>(_onButtonClickedJSONString); //bypass private constructor
 			eventTarget.pTargetBehaviour = target;
 
-			Debug.LogError(eventTarget.GetDebugText());
+			Plugin.Logger.LogInfo(eventTarget.GetDebugText());
 			foreach (var eventInfo in button.pButton.GetAllAltarEvents(true))
 			{
 				if (eventInfo.pAltarEventFieldName == "on_clicked_")

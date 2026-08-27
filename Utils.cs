@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
@@ -19,6 +20,27 @@ public static class Utils
 	public static void SetFieldValue<T>(this object obj, string name, T value)
 	{
 		obj.GetType().GetField(name, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).SetValue(obj, value);
+	}
+
+	public static void SetPrivateFieldInBase<T>(this T obj, string fieldName, object value)
+	{
+		Type currentType = typeof(T);
+
+		while (currentType != null)
+		{
+			FieldInfo field = currentType.GetField(fieldName,
+				BindingFlags.NonPublic |
+				BindingFlags.Instance);
+
+			if (field != null)
+			{
+				field.SetValue(obj, value);
+				Plugin.Logger.LogWarning($"Set field '{fieldName}' in base class '{currentType.Name}'");
+				return;
+			}
+			currentType = currentType.BaseType;
+		}
+		Plugin.Logger.LogError($"Field '{fieldName}' not found in {typeof(T)} or any base class!");
 	}
 
 	public static T DeepCopy<T>(this T source) where T : class
@@ -64,7 +86,7 @@ public static class Utils
 		AddTranslationToLocalizationData(transVersionTable, sizeTable, table, "Location-100ShortDescription", "DivineRelic", "Description", "It does nothing - really");
 		AddTranslationToLocalizationData(transVersionTable, sizeTable, table, "Location-100Description", "DivineRelic", "ShortDescription", "It polluted the pool, but made game not crush - fair deal if you ask me");
 
-		for(int i=0;i<keys.Count;i++)
+		for (int i = 0; i < keys.Count; i++)
 		{
 			AddTranslationToLocalizationData(transVersionTable, sizeTable, table, keys[i], region[i], field[i], name[i]);
 		}
