@@ -1,8 +1,10 @@
 using System.Collections.Generic;
 using Altar.Events;
+using Archipelago.MultiClient.Net.Packets;
 using Talents;
 using UnityEngine;
 using Zyklus.Loot;
+using Zyklus.Managers;
 using Zyklus.UI;
 
 namespace ArchipelagoRandomizer.EventHandlers;
@@ -39,6 +41,13 @@ public class TalentButtonSelected : MonoBehaviour
 	[EventTarget]
 	private void OnTalentButtonClicked()
 	{
+		if (!Items.Items.pEnabledCharacters.ContainsKey(PlayerManager.sSingleton.pLocalPlayerCharacters[0]))
+		{
+			var message = Connection.pSession.Players.ActivePlayer.Name.ToString() + " PLEASE GO BACK TO HOUSE AND SELECT UNLOCKED CHARACTER";
+			Connection.pSession.Socket.SendPacket(new SayPacket { Text = message });
+			return;
+		}
+
 		TalentSelectButton button = gameObject.GetComponent<TalentSelectButton>();
 
 		if (button == null)

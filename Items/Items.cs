@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Archipelago.MultiClient.Net.Helpers;
 using Archipelago.MultiClient.Net.Models;
@@ -11,11 +12,42 @@ namespace ArchipelagoRandomizer.Items;
 public class Items
 {
 	public static Items sSingleton;
-	private List<ReceivedItemsHelper> itemsToReceiveQueue = new();
+	private List<ReceivedItemsHelper> itemsToReceiveQueue_ = new();
+	private static Dictionary<PlayerCharacterEnum, bool> enabledCharacters_ = new();
+
+	public static Dictionary<PlayerCharacterEnum, bool> pEnabledCharacters
+	{
+		get => enabledCharacters_;
+	}
 
 	public Items()
 	{
 		sSingleton = this;
+
+		enabledCharacters_.Add(PlayerCharacterEnum.ALL, false);
+		enabledCharacters_.Add(PlayerCharacterEnum.NO_ONE, false);
+		enabledCharacters_.Add(PlayerCharacterEnum.John, false);
+		enabledCharacters_.Add(PlayerCharacterEnum.Mark, false);
+		enabledCharacters_.Add(PlayerCharacterEnum.Kevin, false);
+		enabledCharacters_.Add(PlayerCharacterEnum.Linda, false);
+		enabledCharacters_.Add(PlayerCharacterEnum.Lucy, false);
+		enabledCharacters_.Add(PlayerCharacterEnum.Joey, false);
+		enabledCharacters_.Add(PlayerCharacterEnum.Apon, false);
+		enabledCharacters_.Add(PlayerCharacterEnum.Bec, false);
+	}
+
+	public void ReceiveItemsOnInit()
+	{
+		if (!Connection.pIsConnected)
+			return;
+
+		foreach (var item in Connection.pSession.Items.AllItemsReceived)
+		{
+			if (UnlockCharacter(item))
+			{
+				continue;
+			}
+		}
 	}
 
 	public void ReceiveItem(ReceivedItemsHelper helper)
@@ -29,10 +61,11 @@ public class Items
 
 		if (General.sIsCeaseFireInProgress) //game is paused
 		{
-			itemsToReceiveQueue.Add(helper);
+			itemsToReceiveQueue_.Add(helper);
 			General.sSingleton.OnCeaseFireStateChanged += OnCeaseFireStateChanged;
 			return;
 		}
+
 
 		ReceiveItemFromHelper(helper);
 	}
@@ -41,7 +74,11 @@ public class Items
 	{
 		foreach (var item in items)
 		{
-			if (Talents.IfIsTalentLearnIt(item.ItemName, player))
+			if (UnlockCharacter(item))
+			{
+				continue;
+			}
+			else if (Talents.IfIsTalentLearnIt(item.ItemName, player))
 			{
 				continue;
 			}
@@ -64,13 +101,34 @@ public class Items
 		var peeked = helper.PeekItem();
 		if (peeked == null)
 			return;
-		Plugin.Logger.LogInfo("relic seeking " + peeked.ItemName);
+
+		Plugin.Logger.LogInfo("item seeking " + peeked.ItemName);
+
+		if (UnlockCharacter(peeked, helper))
+			return;
 		if (DivineRelics.SearchForRelicByNameAndAddItToPlayer(peeked.ItemName, lootContainer, false, helper))
 			return;
 		if (Talents.IfIsTalentLearnIt(peeked.ItemName, player, helper))
 			return;
 
 		helper.DequeueItem();
+	}
+
+	private static bool UnlockCharacter(ItemInfo peeked, ReceivedItemsHelper helper = null)
+	{
+		if (!peeked.ItemName.StartsWith("Character "))
+			return false;
+
+		PlayerCharacterEnum characterToUnlock = (PlayerCharacterEnum)(peeked.ItemId - APItemsUtils.pBaseItemsId - 84);
+		enabledCharacters_[characterToUnlock] = true;
+
+		if (helper != null)
+		{
+			helper.DequeueItem();
+		}
+
+		return true;
+
 	}
 
 	private void OnCeaseFireStateChanged()
@@ -80,10 +138,11 @@ public class Items
 
 		General.sSingleton.OnCeaseFireStateChanged -= OnCeaseFireStateChanged;
 
-		foreach (var helper in itemsToReceiveQueue)
+		foreach (var helper in itemsToReceiveQueue_)
 		{
 			ReceiveItemFromHelper(helper);
 		}
+		itemsToReceiveQueue_.Clear();
 
 	}
 }

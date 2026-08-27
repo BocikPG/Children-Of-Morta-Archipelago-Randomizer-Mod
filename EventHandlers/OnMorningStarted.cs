@@ -7,6 +7,7 @@ using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Exceptions;
 using ArchipelagoRandomizer.Items;
+using ArchipelagoRandomizer.UI;
 using Newtonsoft.Json.Linq;
 using Talents;
 using UnityEngine;
@@ -62,7 +63,10 @@ public class OnMorningStarted : MonoBehaviour
         GameFlowInterface.sSingleton.GetFieldValue<UIManagerHFSM>("ui_manager_hfsm_").pHFSM.PreEventPush += OnUIStateChangePrePush;
         GameFlowInterface.sSingleton.GetFieldValue<UIManagerHFSM>("ui_manager_hfsm_").pHFSM.PostEventPush += OnUIStateChangePostPush;
 
+        Items.Items.sSingleton.ReceiveItemsOnInit();
+
         SetUpLocalization();
+        SetUpPlayableCharacters();
         SetUpEndlessShop();
 
         static void HookUpToEvent()
@@ -154,7 +158,7 @@ public class OnMorningStarted : MonoBehaviour
             Plugin.Logger.LogInfo("End of game session");
 
         }
-        Plugin.Logger.LogInfo("ui change triggered " + event_code);
+        //Plugin.Logger.LogInfo("ui change triggered " + event_code);
     }
     private static void OnUIStateChangePostPush(HFSM hfsm, int event_code, object sender, ListPoolInstance<object> event_parameters)
     {
@@ -186,7 +190,23 @@ public class OnMorningStarted : MonoBehaviour
             //     }
             // }
         }
-        Plugin.Logger.LogInfo("ui change triggered " + event_code);
+        else if (event_code == (int)UIManager_EventsEnum.SHOWING_CHARACTER_SELECT_MENU_REQUESTED)
+        {
+            GUIManager.sSingleton.pIsVisible = true;
+        }
+        else if (event_code == (int)UIManager_EventsEnum.HIDING_CHARACTER_SELECT_MENU_REQUESTED)
+        {
+            GUIManager.sSingleton.pIsVisible = false;
+        }
+        else if (event_code == (int)UIManager_EventsEnum.SHOWING_PAUSE_MENU_REQUESTED)
+        {
+            GUIManager.sSingleton.pIsVisible = true;
+        }
+        else if (event_code == (int)UIManager_EventsEnum.HIDING_PAUSE_MENU_REQUESTED)
+        {
+            GUIManager.sSingleton.pIsVisible = false;
+        }
+        //Plugin.Logger.LogInfo("ui change triggered " + event_code);
 
     }
 
@@ -215,14 +235,12 @@ public class OnMorningStarted : MonoBehaviour
 
     }
 
-    private static void SetUpLocalization()
+    private static async void SetUpLocalization()
     {
         if (!locSet)
         {
-            APItemsUtils.SetLocalizationsFromAPItems();
-            if (locKeys_ != null)
+            if (await APItemsUtils.SetLocalizationsFromAPItems())
             {
-                Utils.AddTranslationsToLocalizationData(locKeys_, locRegions_, locFields_, locNames_);
                 locSet = true;
                 Plugin.Logger.LogInfo("Localization for APItems set");
             }
@@ -230,9 +248,9 @@ public class OnMorningStarted : MonoBehaviour
     }
 
     [EventTarget]
-    private void Event_OnMorningStarted()
+    public void Event_OnMorningStarted()
     {
-        if (ProfileManager.sSingleton.pGameMode != GameMode.Endless)
+        if (ProfileManager.sSingleton.pGameMode != GameMode.Endless || !Connection.pIsConnected)
             return;
 
         SetUpLocalization();
@@ -244,7 +262,7 @@ public class OnMorningStarted : MonoBehaviour
 
     private static void SetUpPlayableCharacters()
     {
-        if (Connection.pLogin == null || Connection.pLogin.Successful == false || Connection.pSession.Items == null || Connection.pSession.Items.AllItemsReceived == null)
+        if (!Connection.pIsConnected || Connection.pSession.Items == null || Connection.pSession.Items.AllItemsReceived == null)
             return;
 
         //block all characters
@@ -272,28 +290,11 @@ public class OnMorningStarted : MonoBehaviour
 
 
         Plugin.Logger.LogWarning("items are here");
-        foreach (var item in Connection.pSession.Items.AllItemsReceived)
+        foreach (var item in Items.Items.pEnabledCharacters)
         {
-            // Plugin.Logger.LogWarning(item?.ItemName);
-            // Plugin.Logger.LogWarning(item?.ItemGame);
-            // Plugin.Logger.LogWarning(item?.ItemDisplayName);
-            // Plugin.Logger.LogWarning(item?.ItemId);
-            if (item.ItemName == null)
-            {
-                Plugin.Logger.LogError(item.ItemId + " ItemName is null, wrong world set up - missing item_name_to_id ref");
-                continue;
-            }
-            if (item.ItemName.StartsWith("Character "))
-            {
-                var name = item.ItemName.Substring(10);
-                if (Enum.TryParse<Zyklus.Player.PlayerCharacterEnum>(name, out var result))
-                {
-                    Plugin.Logger.LogWarning("unlocking");
-                    ProfileManager.sSingleton.pLocalProfile.UnlockCharacter(result);
-                }
-                else
-                    Plugin.Logger.LogError("Character not found");
-            }
+            if (item.Value == true)
+                ProfileManager.sSingleton.pLocalProfile.UnlockCharacter(item.Key);
+
         }
     }
 

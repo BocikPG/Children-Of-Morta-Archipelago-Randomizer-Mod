@@ -5,8 +5,8 @@ using System.Reflection;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
 using Altar.Localization;
-using ArchipelagoRandomizer;
 
+namespace ArchipelagoRandomizer;
 
 public static class Utils
 {
@@ -59,10 +59,10 @@ public static class Utils
 		}
 	}
 
-	public static void AddTranslationsToLocalizationData(List<string> keys, List<string> region, List<string> field, List<string> name)
+	public static bool AddTranslationsToLocalizationData(List<string> keys, List<string> region, List<string> field, List<string> name)
 	{
 		if (fired)
-			return;
+			return false;
 		var transVersionTable = LocalizedTextUtility.sSingleton.pBank.pTable.GetFieldValue<List<List<float>>>("table_"); // It can be all 0 afaik (it's probably for internal processing)
 		var sizeTable = LocalizedTextUtility.sSingleton.pBank.pTable.GetFieldValue<List<int>>("rows_key_");
 		var table = LocalizedTextUtility.sSingleton.pBank.pTable.GetFieldValue<Dictionary<string, List<string>>>("table_string_dict_");
@@ -93,6 +93,8 @@ public static class Utils
 		fired = true;
 		Plugin.Logger.LogMessage(transVersionTable.Count);
 		Plugin.Logger.LogMessage(table.Count);
+
+		return true;
 	}
 
 	public static void AddTranslationToLocalizationData(List<List<float>> transVersionTable, List<int> sizeTable, Dictionary<string, List<string>> table, string key, string region, string field, string name)

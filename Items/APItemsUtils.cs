@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
+using Altar.Localization;
 using ArchipelagoRandomizer.EventHandlers;
 using BepInEx;
 using UnityEngine;
@@ -13,7 +15,7 @@ public class APItemsUtils
 {
 	private static Sprite aPSprite_;
 	private static Sprite aPUISprite_;
-	public static long pItemsId = 85000; //CHANGE: before release
+	public static long pBaseItemsId = 85000; //CHANGE: before release
 	public static long pBaseLocationsId = 87000; //CHANGE: before release
 
 	public static void SetInGameSprite<T>(T relic, string fieldName) where T : class
@@ -78,10 +80,10 @@ public class APItemsUtils
 		Talents.CreateLocationsTalents(talentLocIdsList);
 	}
 
-	public static async void SetLocalizationsFromAPItems()
+	public static async Task<bool> SetLocalizationsFromAPItems()
 	{
-		if (Connection.pSession == null || Connection.pSession.Locations == null)
-			return;
+		if (Connection.pSession == null || Connection.pSession.Locations == null || LocalizedTextUtility.sSingleton == null)
+			return false;
 		Dictionary<long, Archipelago.MultiClient.Net.Models.ScoutedItemInfo> locations = new();
 		try
 		{
@@ -91,7 +93,7 @@ public class APItemsUtils
 		catch
 		{
 			Plugin.Logger.LogWarning("Not connected - localization strings not set");
-			return;
+			return false;
 		}
 
 		List<string> locKeys = new();
@@ -157,12 +159,12 @@ public class APItemsUtils
 			locFields.Add("ShortDescription");
 		}
 
-		OnMorningStarted.pLocKeys = locKeys;
-		OnMorningStarted.pLocRegions = locRegions;
-		OnMorningStarted.pLocFields = locFields;
-		OnMorningStarted.pLocNames = locNames;
+		if(!Utils.AddTranslationsToLocalizationData(locKeys, locRegions, locFields, locNames))
+			return false;
 
 		Plugin.Logger.LogInfo("Localization from APItems gathered");
+
+		return true;
 	}
 
 

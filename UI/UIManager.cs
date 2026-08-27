@@ -15,7 +15,7 @@ namespace ArchipelagoRandomizer.UI;
 //	1. it's harder to get into - it's manageable mostly it's looking for stuff like TextFieldUIController and filling it with data
 //	2. (the actual problem) without modifications TextFields cannot be selected/typed into.
 //		even TextFieldUIController doesn't allow to type into the field - this class it's not even used so I can't look into implementation
-//Leaving this class tho if someone, someday would like to break into this UI and eventSystem and make proper AP GUI - using AP client for now
+//Leaving this class tho if someone, someday would like to break into this UI and eventSystem and make proper AP GUI - using GUIManager for now
 public class UIManager
 {
 	public static UIManager sSingleton;

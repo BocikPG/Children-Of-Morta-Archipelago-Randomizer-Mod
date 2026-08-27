@@ -1,6 +1,8 @@
 using System.Collections.Generic;
+using System.Linq;
 using Altar.Localization;
 using Archipelago.MultiClient.Net.Helpers;
+using Archipelago.MultiClient.Net.Packets;
 using UnityEngine;
 using Zyklus;
 using Zyklus.DivineRelic;
@@ -128,6 +130,12 @@ public static class DivineRelics
 
 	public static void OnPassiveDivineRelicAcquiredLocally(PassiveDivineRelicBase divine_relic)
 	{
+		if (!Items.pEnabledCharacters.ContainsKey(PlayerManager.sSingleton.pLocalPlayerCharacters[0]))
+		{
+			var message = Connection.pSession.Players.ActivePlayer.Name.ToString() + " PLEASE GO BACK TO HOUSE AND SELECT UNLOCKED CHARACTER";
+			Connection.pSession.Socket.SendPacket(new SayPacket { Text = message });
+			return;
+		}
 		Plugin.Logger.LogInfo("Found: " + divine_relic.pHandle.name);
 
 		if (long.TryParse(divine_relic.pHandle.name, out var id))
@@ -149,6 +157,12 @@ public static class DivineRelics
 
 	public static void OnDivineRelicAcquiredLocally(UsableDivineRelicBase current_divine_relic, UsableDivineRelicSlot slot)
 	{
+		if (!Items.pEnabledCharacters.ContainsKey(PlayerManager.sSingleton.pLocalPlayerCharacters[0]))
+		{
+			var message = Connection.pSession.Players.ActivePlayer.Name.ToString() + " PLEASE GO BACK TO HOUSE AND SELECT UNLOCKED CHARACTER";
+			Connection.pSession.Socket.SendPacket(new SayPacket { Text = message });
+			return;
+		}
 		Plugin.Logger.LogInfo("Found: " + current_divine_relic.pHandle.name);
 		if (long.TryParse(current_divine_relic.pHandle.name, out var id))
 		{
@@ -175,16 +189,22 @@ public static class DivineRelics
 			return false;
 		}
 
+		var alreadyReceivedPassiveRelics = PlayerManager.sSingleton.GetPlayer(0).pDivineRelicContainer.GetPassiveDivineRelics();
+		if (alreadyReceivedPassiveRelics == null)
+			alreadyReceivedPassiveRelics = new();
+
 		foreach (var relic in pDivineRelics)
 		{
 			//Plugin.Logger.LogInfo("relic comparing " + relic.name);
 			if (relic.name.StartsWith(relicName))
 			{
-				if(!isReceivingMany)
+				if (!isReceivingMany)
 					Plugin.Logger.LogInfo("relic found " + relic.name);
 
 				if (!relic.GetIsUsable())
 				{
+					if (alreadyReceivedPassiveRelics.Exists(d => d.pHandle.name == relic.name))
+						continue;
 					try
 					{
 						GameObject obj = lootStaticDataContainer.DropDivineRelic(relic, Vector2.zero, Vector2.zero, Zyklus.Player.PlayerNumberFlag.P1, false, !isReceivingMany) ?? LootStaticDataContainer.sSingleton.DropDivineRelic(relic, Vector2.zero, Vector2.zero, Zyklus.Player.PlayerNumberFlag.P1, false, !isReceivingMany); //TODO: settings for sounds :3 or just remove ear rape on loading xD 
@@ -212,9 +232,9 @@ public static class DivineRelics
 					//PlayerManager.sSingleton.GetPlayer(0).pDivineRelicContainer.AddUsableDivineRelic(obj.GetComponent<UsableDivineRelicBase>());
 				}
 
-				if(!isReceivingMany)
+				if (!isReceivingMany)
 					Plugin.Logger.LogInfo("Received: " + relicName);
-					
+
 				if (helper != null)
 				{
 					helper.DequeueItem();

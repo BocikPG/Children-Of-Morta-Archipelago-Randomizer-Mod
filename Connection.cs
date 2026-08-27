@@ -1,14 +1,17 @@
 using System;
+using System.Net.WebSockets;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
+using Archipelago.MultiClient.Net.Exceptions;
 using ArchipelagoRandomizer;
 using ArchipelagoRandomizer.Items;
+using ArchipelagoRandomizer.UI;
 
 public class Connection
 {
 	public static Connection sSingleton;
 	public static ArchipelagoSession pSession;
-	public static LoginSuccessful pLogin;
+	public static bool pIsConnected = false;
 
 	public Connection()
 	{
@@ -17,14 +20,35 @@ public class Connection
 
 	public Connection CreateSession(string server)
 	{
+		if (pSession != null)
+		{
+			pSession.Items.ItemReceived -= Items.sSingleton.ReceiveItem;
+			pSession.Socket.ErrorReceived -= OnErrorReceived;
+			pSession = null;
+		}
+
 		pSession = ArchipelagoSessionFactory.CreateSession(server);
-		//TODO: hook up all functions here
+		
 		pSession.Items.ItemReceived += Items.sSingleton.ReceiveItem;
-		pSession.Socket.ErrorReceived += (error, frror) => Plugin.Logger.LogError(error.Message);
+		pSession.Socket.ErrorReceived += OnErrorReceived; // 
 
 		Plugin.Logger.LogInfo("session");
 
 		return this;
+	}
+
+	private void OnErrorReceived(Exception e, string message)
+	{
+		Plugin.Logger.LogError(e.Message + e.GetType().ToString());
+		if (e is ArchipelagoSocketClosedException)
+		{
+			pIsConnected = false;
+		}
+		else if (e is WebSocketException)
+		{
+			Connect(GUIManager.sSingleton.pSlotName, GUIManager.sSingleton.pPassword);
+		}
+
 	}
 
 	public void Connect(string user, string pass = null)
@@ -32,7 +56,7 @@ public class Connection
 		LoginResult result;
 
 		result = pSession.TryConnectAndLogin("Children of Morta", user, ItemsHandlingFlags.AllItems, new Version(0, 6, 0), password: pass); //consider other item flags
-																															//app will freeze here (hopefully not for long)
+																																			//app will freeze here (hopefully not for long)
 
 		if (!result.Successful)
 		{
@@ -48,6 +72,7 @@ public class Connection
 			}
 
 			Plugin.Logger.LogError(errorMessage);
+			pIsConnected = false;
 
 			return; // Did not connect, show the user the contents of `errorMessage`
 		}
@@ -57,6 +82,6 @@ public class Connection
 		// initial connection (e.g. a copy of the slot data as `loginSuccess.SlotData`)
 		Plugin.Logger.LogInfo("Connected to archipelago server");
 		var loginSuccess = (LoginSuccessful)result;
-		pLogin = loginSuccess;
+		pIsConnected = true;
 	}
 }

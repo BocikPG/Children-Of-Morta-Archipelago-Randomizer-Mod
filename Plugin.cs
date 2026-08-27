@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using ArchipelagoRandomizer.EventHandlers;
 using ArchipelagoRandomizer.Items;
+using ArchipelagoRandomizer.UI;
 using BepInEx;
 using BepInEx.Logging;
+using UnityEngine;
 using Zyklus.GameManager;
 using Zyklus.Home;
 using Zyklus.Loot;
@@ -22,6 +24,8 @@ public class Plugin : BaseUnityPlugin
     public Connection pConnection;
     public Items.Items pItems;
 
+    private bool initedBefore_ = false;
+
     // public void Update() //DEBUG: remove if want to debug - commented for minor performance boost :)
     // {
     //     DebugPlugin.Update();
@@ -33,37 +37,45 @@ public class Plugin : BaseUnityPlugin
         Logger = base.Logger;
         Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
 
-        StartCoroutine(nameof(WaitAndInit));
-
         if (sSingleton != this)
             sSingleton = this;
-            
+
         pItems = new();
 
         pConnection = new();
-        pConnection.CreateSession("localhost:38281").Connect("PlayerName");
 
-        // var a = CharacterSelect.sActiveMenu.pCharacterPanels[0];
+        new GUIManager();
+        //pConnection.CreateSession("localhost:38281").Connect("PlayerName");
     }
 
 
-    IEnumerator WaitAndInit()
+    public IEnumerator WaitAndInit()
     {
-
+        if(initedBefore_)
+            yield break;
         while (ZyklusSceneManager.sSingleton == null || PlayerManager.sSingleton == null || HomeManager.sSingleton == null || GameFlowInterface.sSingleton == null || EndlessShopManager.sSingleton == null)
         {
             // Wait for the next frame
             yield return null;
         }
 
-        CheatMenu.sSingleton.Show();
         OnMorningStarted.OnMorningStartedInit();
         OnMatrixGenDone.SubscribeToMatrixGenDone();
         //ZyklusSceneManager.sSingleton.OnMaterialPlaceChanged += TalentsManager.SetTalents;
         ZyklusSceneManager.sSingleton.OnMaterialPlaceChanged += APItemsUtils.SetUpAPItems;
+        initedBefore_ = true;
     }
 
-    public T GetInstance<T>(T prefab) where T: UnityEngine.Object
+    private void OnGUI()
+    {
+        if(GUIManager.sSingleton == null)
+            return;
+
+        GUIManager.sSingleton.OnGUI();
+
+    }
+
+    public T GetInstance<T>(T prefab) where T : UnityEngine.Object
     {
         return Instantiate(prefab);
     }

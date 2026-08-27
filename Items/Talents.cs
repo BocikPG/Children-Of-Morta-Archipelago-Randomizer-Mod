@@ -140,12 +140,17 @@ public static class Talents
 			return false;
 		}
 
+		var alreadyReceivedTalents = player.pTalentManager.pSelectedTalents;
+
 		//player.pRuneManager.AddRune()
 
 		foreach (var talent in pTalents)
 		{
 
 			if (talent == null || talent.name == null)
+				continue;
+
+			if (alreadyReceivedTalents.Exists(t => t.name == talent.name))
 				continue;
 
 			//player.pRuneManager.AddRune(talent,1f,true); (talents are runes so it can be skipped i guess)
