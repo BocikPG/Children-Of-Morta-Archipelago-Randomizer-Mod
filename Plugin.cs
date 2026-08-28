@@ -15,7 +15,7 @@ using Zyklus.UI;
 namespace ArchipelagoRandomizer;
 
 
-[BepInPlugin("bocik.plugins.archipelago", "Archipelago Randomizer", "0.0.1")]
+[BepInPlugin("bocik.plugins.archipelago", "Archipelago Randomizer", "0.1.0")]
 public class Plugin : BaseUnityPlugin
 {
     internal static new ManualLogSource Logger;
