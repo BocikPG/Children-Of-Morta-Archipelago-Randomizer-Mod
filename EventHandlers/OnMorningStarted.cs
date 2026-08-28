@@ -4,8 +4,10 @@ using Altar.Events;
 using Altar.HFSM;
 using Altar.Pool;
 using Archipelago.MultiClient.Net;
+using Archipelago.MultiClient.Net.BounceFeatures.DeathLink;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Exceptions;
+using Archipelago.MultiClient.Net.Packets;
 using ArchipelagoRandomizer.Items;
 using ArchipelagoRandomizer.UI;
 using Newtonsoft.Json.Linq;
@@ -143,22 +145,22 @@ public class OnMorningStarted : MonoBehaviour
                 }
 
             }
-            else if (event_code == (int)UIManager_EventsEnum.SHOWING_ENDLESS_SHOP_MENU_REQUESTED)
+            else if ((int)event_parameters.pList[0] == (int)GameRunFinishReasonEnum.Lose)
             {
-                var list = EndlessShopManager.sSingleton.pSelectedItems;
-                foreach (var item in list)
+                var aPSettings = session.DataStorage.GetSlotData()["settings"] as JObject;
+                if (aPSettings.Value<int>("deathLinkEnabled") == 1)
                 {
-                    if (long.TryParse(item.GetName(), out var result))
-                    {
-                        session.Hints.CreateHints(HintStatus.Found, result);
-                    }
+                    Connection.pDeathLinkService.SendDeathLink(new DeathLink(Connection.pSession.Players.ActivePlayer.Name, "Excluded from family"));
+                    Connection.pSession.Socket.SendPacket(new SayPacket {Text = Connection.pSession.Players.ActivePlayer.Name + " has been excluded from family"});
+                    Plugin.Logger.LogInfo("Sending death link");
+
                 }
             }
 
             Plugin.Logger.LogInfo("End of game session");
-
         }
-        //Plugin.Logger.LogInfo("ui change triggered " + event_code);
+
+
     }
     private static void OnUIStateChangePostPush(HFSM hfsm, int event_code, object sender, ListPoolInstance<object> event_parameters)
     {
@@ -189,6 +191,17 @@ public class OnMorningStarted : MonoBehaviour
             //         }
             //     }
             // }
+        }
+        else if (event_code == (int)UIManager_EventsEnum.SHOWING_ENDLESS_SHOP_MENU_REQUESTED)
+        {
+            var list = EndlessShopManager.sSingleton.pSelectedItems;
+            foreach (var item in list)
+            {
+                if (long.TryParse(item.GetName(), out var result))
+                {
+                    session.Hints.CreateHints(HintStatus.Found, result);
+                }
+            }
         }
         else if (event_code == (int)UIManager_EventsEnum.SHOWING_CHARACTER_SELECT_MENU_REQUESTED)
         {
