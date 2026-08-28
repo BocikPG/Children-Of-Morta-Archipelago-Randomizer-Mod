@@ -3,6 +3,7 @@ using System.Net.WebSockets;
 using Archipelago.MultiClient.Net;
 using Archipelago.MultiClient.Net.Enums;
 using Archipelago.MultiClient.Net.Exceptions;
+using Archipelago.MultiClient.Net.MessageLog.Messages;
 using ArchipelagoRandomizer;
 using ArchipelagoRandomizer.Items;
 using ArchipelagoRandomizer.UI;
@@ -24,17 +25,24 @@ public class Connection
 		{
 			pSession.Items.ItemReceived -= Items.sSingleton.ReceiveItem;
 			pSession.Socket.ErrorReceived -= OnErrorReceived;
+			pSession.MessageLog.OnMessageReceived -= OnMessageReceived;
 			pSession = null;
 		}
 
 		pSession = ArchipelagoSessionFactory.CreateSession(server);
-		
+
 		pSession.Items.ItemReceived += Items.sSingleton.ReceiveItem;
-		pSession.Socket.ErrorReceived += OnErrorReceived; // 
+		pSession.Socket.ErrorReceived += OnErrorReceived;
+		pSession.MessageLog.OnMessageReceived += OnMessageReceived;
 
 		Plugin.Logger.LogInfo("session");
 
 		return this;
+	}
+
+	private void OnMessageReceived(LogMessage message)
+	{
+		GUIManager.sSingleton.LogMessage(message.ToString());
 	}
 
 	private void OnErrorReceived(Exception e, string message)

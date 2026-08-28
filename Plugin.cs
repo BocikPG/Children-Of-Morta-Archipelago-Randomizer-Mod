@@ -23,13 +23,24 @@ public class Plugin : BaseUnityPlugin
     public static Plugin sSingleton;
     public Connection pConnection;
     public Items.Items pItems;
+    public static System.Action OnScreenSizeChanged;
 
     private bool initedBefore_ = false;
+    private Vector2Int lastScreenSize_;
 
-    // public void Update() //DEBUG: remove if want to debug - commented for minor performance boost :)
-    // {
-    //     DebugPlugin.Update();
-    // }
+    public void Update() 
+    {
+        //DebugPlugin.Update(); //DEBUG: remove if want to debug 
+
+        Vector2Int currentScreenSize = new Vector2Int(Screen.width, Screen.height);
+        
+        // Check if the size has changed
+        if (currentScreenSize != lastScreenSize_)
+        {
+            lastScreenSize_ = currentScreenSize;
+            OnScreenSizeChanged?.Invoke(); // Notify all subscribers
+        }
+    }
 
     private void Awake()
     {
@@ -43,6 +54,8 @@ public class Plugin : BaseUnityPlugin
         pItems = new();
 
         pConnection = new();
+
+        lastScreenSize_ = new Vector2Int(Screen.width, Screen.height);
 
         new GUIManager();
         //pConnection.CreateSession("localhost:38281").Connect("PlayerName");
