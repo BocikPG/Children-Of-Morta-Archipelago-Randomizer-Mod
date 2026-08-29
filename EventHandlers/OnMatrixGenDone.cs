@@ -8,13 +8,13 @@ namespace ArchipelagoRandomizer.EventHandlers;
 
 public static class OnMatrixGenDone
 {
-	public static void SubscribeToMatrixGenDone()
-	{
-		Matrix.sOnMatrixGenDone += Items.Talents.OnMatrixGenDone;
-		Matrix.sOnMatrixGenDone += GiveReceivedItems;
-	}
+    public static void SubscribeToMatrixGenDone()
+    {
+        Matrix.sOnMatrixGenDone += Items.Talents.OnMatrixGenDone;
+        Matrix.sOnMatrixGenDone += GiveReceivedItems;
+    }
 
-	public static void GiveReceivedItems(Matrix matrix)
+    public static void GiveReceivedItems(Matrix matrix)
     {
         var player = PlayerManager.sSingleton.GetPlayer(0); // maybe player 2 too?
         var lootContainer = LootStaticDataContainer.sSingleton;
@@ -40,7 +40,6 @@ public static class OnMatrixGenDone
 
         //give items to player
         Items.Items.sSingleton.GiveItemsToPlayer(player, lootContainer, Connection.pSession.Items.AllItemsReceived);
-		
 
         // restore old value
         if (!savedValue)

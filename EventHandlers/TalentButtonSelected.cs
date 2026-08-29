@@ -41,7 +41,7 @@ public class TalentButtonSelected : MonoBehaviour
 	[EventTarget]
 	private void OnTalentButtonClicked()
 	{
-		if (!Items.Items.pEnabledCharacters.ContainsKey(PlayerManager.sSingleton.pLocalPlayerCharacters[0]))
+		if (!Items.Items.pEnabledCharacters[PlayerManager.sSingleton.pLocalPlayerCharacters[0]])
 		{
 			var message = Connection.pSession.Players.ActivePlayer.Name.ToString() + " PLEASE GO BACK TO HOUSE AND SELECT UNLOCKED CHARACTER";
 			Connection.pSession.Socket.SendPacket(new SayPacket { Text = message });
@@ -82,6 +82,8 @@ public class TalentButtonSelected : MonoBehaviour
 			//I could just set max value of talent to 1, but this seems safer/more consistent with loading of missing locations
 			Utils.GetFieldValue<List<TalentAsset>>(LootStaticDataContainer.sSingleton, "available_talents_list_").Remove(selectedTalent); //remove picked one from pool
 		}
+
+		Items.Talents.AddPassiveDecoysBasedOnListCount(LootStaticDataContainer.sSingleton.pAvailableTalents);
 
 	}
 }

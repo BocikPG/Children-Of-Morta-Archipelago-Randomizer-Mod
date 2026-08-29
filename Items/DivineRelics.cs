@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Altar.Localization;
 using Archipelago.MultiClient.Net.Helpers;
 using Archipelago.MultiClient.Net.Packets;
+using ArchipelagoRandomizer.EventHandlers;
 using UnityEngine;
 using Zyklus;
 using Zyklus.DivineRelic;
@@ -50,45 +52,49 @@ public static class DivineRelics
 
 		}
 
-		foreach (var relic in ShopDecoys())
-		{
-			list.Add(relic);
-		}
+		ShopDecoys(list);
 
 		LootStaticDataContainer.sSingleton.pAvailableDivineRelics = list;
 	}
 
-	private static List<DivineRelicHandle> ShopDecoys() //also hack for shop just to be sure
+	private static List<DivineRelicHandle> ShopDecoys(List<DivineRelicHandle> list) //also hack for shop just to be sure
 	{
-		List<DivineRelicHandle> shopDecoyList = new();
+		AddPassiveDecoysBasedOnListCount(list);
 
-		ShopDecoy(shopDecoyList, false);
-		ShopDecoy(shopDecoyList, false);
-		ShopDecoy(shopDecoyList, false);
-		ShopDecoy(shopDecoyList, false);
+		ShopDecoy(list, true);
+		ShopDecoy(list, true);
+		ShopDecoy(list, true);
+		ShopDecoy(list, true);
+		ShopDecoy(list, true);
 
-		ShopDecoy(shopDecoyList, true);
-		ShopDecoy(shopDecoyList, true);
-		ShopDecoy(shopDecoyList, true);
-		ShopDecoy(shopDecoyList, true);
+		return list;
+	}
 
-		return shopDecoyList;
+	private static void AddPassiveDecoysBasedOnListCount(List<DivineRelicHandle> list)
+	{
+		if (list.Count <= 15)
+		{
+			for (int i = 0; i < (int)Math.Ceiling(Math.Abs(list.Count - 15) / 3f); i++)
+			{
+				ShopDecoy(list, false);
+			}
+		}
 	}
 
 	private static void ShopDecoy(List<DivineRelicHandle> list, bool is_usable)
 	{
 		if (is_usable)
-			TurnRelicToBlankItem(list, pDivineRelicBlankHandle, "APItemBlankRelicDisplayName", "APItemBlankRelicDescription", "APItemBlankRelicShortDescription");
+			TurnRelicToBlankItem(list, pDivineRelicUsableBlankDecoyHandle, -100);
 		else
-			TurnRelicToBlankItem(list, pDivineRelicUsableBlankDecoyHandle, "APItemBlankRelicDisplayName", "APItemBlankRelicDescription", "APItemBlankRelicShortDescription");
+			TurnRelicToBlankItem(list, pDivineRelicBlankHandle, -200);
 	}
 
-	private static void TurnRelicToBlankItem(List<DivineRelicHandle> shopDecoyList, DivineRelicHandle prefab, string displayNameKey, string descriptionKey, string shortDescriptionKey)
+	private static void TurnRelicToBlankItem(List<DivineRelicHandle> shopDecoyList, DivineRelicHandle prefab, long id)
 	{
 		List<DivineRelicHandle> tieredRelics = new();
 		for (int i = 0; i < 3; i++)
 		{
-			tieredRelics.Add(TurnRelicToAPItem(Plugin.sSingleton.GetInstance(prefab), -100, i));
+			tieredRelics.Add(TurnRelicToAPItem(Plugin.sSingleton.GetInstance(prefab), id, i));
 		}
 		SetTierHandlers(tieredRelics);
 		foreach (var rel in tieredRelics)
@@ -130,7 +136,7 @@ public static class DivineRelics
 
 	public static void OnPassiveDivineRelicAcquiredLocally(PassiveDivineRelicBase divine_relic)
 	{
-		if (!Items.pEnabledCharacters.ContainsKey(PlayerManager.sSingleton.pLocalPlayerCharacters[0]))
+		if (!Items.pEnabledCharacters[PlayerManager.sSingleton.pLocalPlayerCharacters[0]])
 		{
 			var message = Connection.pSession.Players.ActivePlayer.Name.ToString() + " PLEASE GO BACK TO HOUSE AND SELECT UNLOCKED CHARACTER";
 			Connection.pSession.Socket.SendPacket(new SayPacket { Text = message });
@@ -140,7 +146,7 @@ public static class DivineRelics
 
 		if (long.TryParse(divine_relic.pHandle.name, out var id))
 		{
-			if (id == -100)
+			if (id == -100 || id == -200)
 			{
 				return;
 			}
@@ -148,6 +154,7 @@ public static class DivineRelics
 			{
 				// PlayerManager.sSingleton.GetPlayer(0).pDivineRelicContainer.RemovePassiveDiniveRelic(relic); //remove from pool, not from player... //apparently not necessary (and crashes the game)
 				LootStaticDataContainer.sSingleton.RemoveDivineRelicVariationsFromList(divine_relic.pHandle);
+				AddPassiveDecoysBasedOnListCount(LootStaticDataContainer.sSingleton.pAvailableDivineRelics);
 			}
 			catch { }
 			Connection.pSession.Locations.CompleteLocationChecks(id);
@@ -157,7 +164,7 @@ public static class DivineRelics
 
 	public static void OnDivineRelicAcquiredLocally(UsableDivineRelicBase current_divine_relic, UsableDivineRelicSlot slot)
 	{
-		if (!Items.pEnabledCharacters.ContainsKey(PlayerManager.sSingleton.pLocalPlayerCharacters[0]))
+		if (!Items.pEnabledCharacters[PlayerManager.sSingleton.pLocalPlayerCharacters[0]])
 		{
 			var message = Connection.pSession.Players.ActivePlayer.Name.ToString() + " PLEASE GO BACK TO HOUSE AND SELECT UNLOCKED CHARACTER";
 			Connection.pSession.Socket.SendPacket(new SayPacket { Text = message });
@@ -240,7 +247,7 @@ public static class DivineRelics
 					helper.DequeueItem();
 				}
 
-				ShopDecoy(LootStaticDataContainer.sSingleton.pAvailableDivineRelics, relic.GetIsUsable());
+				AddPassiveDecoysBasedOnListCount(LootStaticDataContainer.sSingleton.pAvailableDivineRelics);
 
 				return true;
 			}

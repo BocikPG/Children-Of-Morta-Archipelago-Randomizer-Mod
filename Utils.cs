@@ -84,7 +84,11 @@ public static class Utils
 
 		AddTranslationToLocalizationData(transVersionTable, sizeTable, table, "Location-100DisplayName", "DivineRelic", "DisplayName", "Blank Relic");
 		AddTranslationToLocalizationData(transVersionTable, sizeTable, table, "Location-100ShortDescription", "DivineRelic", "Description", "It does nothing - really");
-		AddTranslationToLocalizationData(transVersionTable, sizeTable, table, "Location-100Description", "DivineRelic", "ShortDescription", "It polluted the pool, but made game not crush - fair deal if you ask me");
+		AddTranslationToLocalizationData(transVersionTable, sizeTable, table, "Location-100Description", "DivineRelic", "ShortDescription", "It polluted the pool, but made game not crash - fair deal if you ask me");
+
+		AddTranslationToLocalizationData(transVersionTable, sizeTable, table, "Location-200DisplayName", "DivineRelic", "DisplayName", "Blank Relic");
+		AddTranslationToLocalizationData(transVersionTable, sizeTable, table, "Location-200ShortDescription", "DivineRelic", "Description", "It does nothing - really");
+		AddTranslationToLocalizationData(transVersionTable, sizeTable, table, "Location-200Description", "DivineRelic", "ShortDescription", "It polluted the pool, but made game not crash - fair deal if you ask me");
 
 		for (int i = 0; i < keys.Count; i++)
 		{

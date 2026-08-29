@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Altar.Localization;
 using Archipelago.MultiClient.Net.Helpers;
@@ -71,14 +72,10 @@ public static class Talents
 			list.Add(TurnTalentToAPItem(Plugin.sSingleton.GetInstance(pBlankTalent), item));
 		}
 
-		for (int i = 0; i < 9; i++) //add 9 blank talents (3 of each type) to prevent crash
-		{
-			list.Add(TurnTalentToAPItem(Plugin.sSingleton.GetInstance(pBlankTalent), -100));
-		}
+		AddPassiveDecoysBasedOnListCount(list);
 
 		Utils.SetFieldValue(LootStaticDataContainer.sSingleton, "available_talents_list_", list);
 	}
-
 
 	private static TalentAsset TurnTalentToAPItem(TalentAsset talentAsset, long item)
 	{
@@ -171,6 +168,22 @@ public static class Talents
 		}
 
 		return false;
+	}
+
+	public static void AddPassiveDecoysBasedOnListCount(List<TalentAsset> list)
+	{
+		if (list.Count <= 12)
+		{
+			for (int i = 0; i < (int)Math.Ceiling(Math.Abs(list.Count - 12) / 3f); i++)
+			{
+				AddBlankItemToList(list);
+			}
+		}
+	}
+
+	private static void AddBlankItemToList(List<TalentAsset> list)
+	{
+		list.Add(TurnTalentToAPItem(Plugin.sSingleton.GetInstance(pBlankTalent), -100));
 	}
 
 	internal static void OnMatrixGenDone(Matrix matrix)
