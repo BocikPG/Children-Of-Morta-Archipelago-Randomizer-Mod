@@ -22,9 +22,9 @@ public class APItemsUtils
 	{
 		if (aPSprite_ == null)
 		{
-			var texture = new Texture2D(168, 128);
-			ImageConversion.LoadImage(texture, File.ReadAllBytes(Paths.PluginPath + @"\ArchipelagoRandomizer\Assets\Binoculars.png"));
-			aPSprite_ = Sprite.Create(texture, new Rect(0, 0, 168, 128), new Vector2(0.5f, 0.5f));
+			var texture = new Texture2D(128, 128);
+			ImageConversion.LoadImage(texture, File.ReadAllBytes(Paths.PluginPath + @"\ArchipelagoRandomizer\Assets\color-icon 128x128.png"));
+			aPSprite_ = Sprite.Create(texture, new Rect(0, 0, 128, 128), new Vector2(0.5f, 0.5f));
 		}
 
 		relic.SetFieldValue(fieldName, aPSprite_);
@@ -34,9 +34,9 @@ public class APItemsUtils
 	{
 		if (aPUISprite_ == null)
 		{
-			var texture = new Texture2D(73, 79);
-			ImageConversion.LoadImage(texture, File.ReadAllBytes(Paths.PluginPath + @"\ArchipelagoRandomizer\Assets\BinocularsUI.png"));
-			aPUISprite_ = Sprite.Create(texture, new Rect(0, 0, 73, 79), new Vector2(0.5f, 0.5f), 1, 0, SpriteMeshType.FullRect, new Vector4(0, 0, 0, 0));
+			var texture = new Texture2D(64, 64);
+			ImageConversion.LoadImage(texture, File.ReadAllBytes(Paths.PluginPath + @"\ArchipelagoRandomizer\Assets\color-icon 64x64.png"));
+			aPUISprite_ = Sprite.Create(texture, new Rect(0, 0, 64, 64), new Vector2(0.5f, 0.5f), 1, 0, SpriteMeshType.FullRect, new Vector4(0, 0, 0, 0));
 			//aPSprite_.textureRectOffset = new Vector2(23.0761f, 20.0761f);
 		}
 
