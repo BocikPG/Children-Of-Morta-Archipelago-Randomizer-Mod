@@ -9,7 +9,7 @@ Many answers are [here](https://archipelago.gg/faq/en/) but in the nutshell: Ite
 2. Download latest version of .zip file from [release page](https://github.com/BocikPG/Children-Of-Morta-Archipelago-Randomizer-Mod/releases)
 3. Unzip folder inside 'ChildrenOfMorta\BepInEx\plugins' so it becomes 'ChildrenOfMorta\BepInEx\plugins\ArchipelagoRandomizer\ArchipelagoRandomizer.dll' (and other files)
 4. Setup archipelago multiworld:
-- Download latest version of .apworld file from the same [release page earlier](https://github.com/BocikPG/Children-Of-Morta-Archipelago-Randomizer-Mod/releases)
+- Download latest version of .apworld file from the same [release page earlier](https://github.com/BocikPG/Children-Of-Morta-Archipelago-Randomizer-Mod/releases) - source code can be found [on this repo/branch](https://github.com/BocikPG/Archipelago/tree/children_of_morta)
 - Double click the downloaded apworld to automatically install it to Archipelago, or manually move the file into the custom_worlds folder of your Archipelago installation
 - For game setup read [Archipelago guide](https://archipelago.gg/tutorial/Archipelago/setup_en) on that topic
 5. Once you have your server running you can run the game.
