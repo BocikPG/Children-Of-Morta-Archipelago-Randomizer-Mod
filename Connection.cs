@@ -116,8 +116,22 @@ public class Connection
 			pDeathLinkService.DisableDeathLink();
 		}
 
+		ProgressiveLocations.Init();
+
+		if (aPSettings.Value<int>("forceDivineRelicsShowUpInOrder") == 1)
+		{
+			ProgressiveLocations.pIsRelicLocationsEnabled = true;
+			Items.sSingleton.RemoveProblematicItems(Items.RemoveItemsFromPoolReason.ForceDivineRelicsShowUpInOrder);
+		}
+		if (aPSettings.Value<int>("forceTalentsShowUpInOrder") == 1)
+		{
+			ProgressiveLocations.pIsTalentLocationsEnabled = true;
+		}
+
 		Plugin.Logger.LogInfo("Connected to archipelago server");
 		var loginSuccess = (LoginSuccessful)result;
 		pIsConnected = true;
 	}
+
+
 }

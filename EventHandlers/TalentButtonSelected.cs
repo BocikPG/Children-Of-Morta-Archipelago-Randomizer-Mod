@@ -28,14 +28,14 @@ public class TalentButtonSelected : MonoBehaviour
 			{
 				if (eventInfo.pAltarEventFieldName == "on_clicked_")
 				{
-					if(eventInfo.pAltarEvent.pTargets == null)
+					if (eventInfo.pAltarEvent.pTargets == null)
 						eventInfo.pAltarEvent.pTargets = new();
-					eventInfo.pAltarEvent.pTargets.Insert(0,eventTarget);
+					eventInfo.pAltarEvent.pTargets.Insert(0, eventTarget);
 				}
 			}
 		}
 
-		
+
 	}
 
 	[EventTarget]
@@ -80,7 +80,15 @@ public class TalentButtonSelected : MonoBehaviour
 			Connection.pSession.Locations.CompleteLocationChecks(id);
 
 			//I could just set max value of talent to 1, but this seems safer/more consistent with loading of missing locations
-			Utils.GetFieldValue<List<TalentAsset>>(LootStaticDataContainer.sSingleton, "available_talents_list_").Remove(selectedTalent); //remove picked one from pool
+			LootStaticDataContainer.sSingleton.pAvailableTalents.Remove(selectedTalent); //remove picked one from pool
+		}
+
+		if (ProgressiveLocations.pIsTalentLocationsEnabled)
+		{
+			var list = LootStaticDataContainer.sSingleton.pAvailableTalents;
+			list.Clear();
+			ProgressiveLocations.IncreaseTalentId();
+			Items.Talents.AddTalentAsOnlyLocation(list, ProgressiveLocations.pCurrentTalentId);
 		}
 
 		Items.Talents.AddPassiveDecoysBasedOnListCount(LootStaticDataContainer.sSingleton.pAvailableTalents);

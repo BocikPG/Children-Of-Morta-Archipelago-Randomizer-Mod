@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Altar.Localization;
 using ArchipelagoRandomizer.EventHandlers;
 using BepInEx;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 using Zyklus.Loot;
 
@@ -34,9 +35,9 @@ public class APItemsUtils
 	{
 		if (aPUISprite_ == null)
 		{
-			var texture = new Texture2D(64, 64);
-			ImageConversion.LoadImage(texture, File.ReadAllBytes(Paths.PluginPath + @"\ArchipelagoRandomizer\Assets\color-icon 64x64.png"));
-			aPUISprite_ = Sprite.Create(texture, new Rect(0, 0, 64, 64), new Vector2(0.5f, 0.5f), 1, 0, SpriteMeshType.FullRect, new Vector4(0, 0, 0, 0));
+			var texture = new Texture2D(48, 48);
+			ImageConversion.LoadImage(texture, File.ReadAllBytes(Paths.PluginPath + @"\ArchipelagoRandomizer\Assets\color-icon 48x48.png"));
+			aPUISprite_ = Sprite.Create(texture, new Rect(0, 0, 48, 48), new Vector2(0.5f, 0.5f), 1, 0, SpriteMeshType.FullRect, new Vector4(0, 0, 0, 0));
 			//aPSprite_.textureRectOffset = new Vector2(23.0761f, 20.0761f);
 		}
 
@@ -45,24 +46,29 @@ public class APItemsUtils
 
 	public static void SetUpAPItems()
 	{
-		if (!Connection.pSession.Socket.Connected)
+		var session = Connection.pSession;
+		if (!session.Socket.Connected)
 		{
 			return;
 		}
 
 		var talents = LootStaticDataContainer.sSingleton.pAvailableTalents;
 		var relics = LootStaticDataContainer.sSingleton.pAvailableDivineRelics;
-		if (relics == null || talents == null)
+		var consumable = LootStaticDataContainer.sSingleton.pAvailableConsumableList;
+		if (relics == null || talents == null || consumable == null)
 			return;
 
 
 		Talents.BackUpTalents(talents);
 		DivineRelics.BackUpRelics(relics);
+		Consumable.BackUpConsumable(consumable);
 
-		var locations = Connection.pSession.Locations.AllMissingLocations;
+		var locations = session.Locations.AllMissingLocations;
 
 		List<long> relicLocIdsList = new();
 		List<long> talentLocIdsList = new();
+
+		var aPSettings = session.DataStorage.GetSlotData()["settings"] as JObject;
 
 		foreach (var locId in locations)
 		{
@@ -74,6 +80,19 @@ public class APItemsUtils
 			{
 				talentLocIdsList.Add(locId);
 			}
+		}
+
+		if (ProgressiveLocations.pIsRelicLocationsEnabled)
+		{
+			ProgressiveLocations.pMaxRelicId = relicLocIdsList.Max();
+			relicLocIdsList.Clear();
+			Items.sSingleton.RemoveProblematicItems(Items.RemoveItemsFromPoolReason.ForceDivineRelicsShowUpInOrder);
+		}
+
+		if (ProgressiveLocations.pIsTalentLocationsEnabled)
+		{
+			ProgressiveLocations.pMaxTalentId = talentLocIdsList.Max();
+			talentLocIdsList.Clear();
 		}
 
 		DivineRelics.CreateLocationsRelics(relicLocIdsList);
@@ -159,7 +178,7 @@ public class APItemsUtils
 			locFields.Add("ShortDescription");
 		}
 
-		if(!Utils.AddTranslationsToLocalizationData(locKeys, locRegions, locFields, locNames))
+		if (!Utils.AddTranslationsToLocalizationData(locKeys, locRegions, locFields, locNames))
 			return false;
 
 		Plugin.Logger.LogInfo("Localization from APItems gathered");

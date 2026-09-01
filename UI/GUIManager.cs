@@ -95,7 +95,7 @@ public class GUIManager
 
 				Plugin.sSingleton.StartCoroutine(nameof(Plugin.sSingleton.WaitAndInit));
 
-				PlayerPrefs.SetString("APuriSavedValue", uri_);
+				PlayerPrefs.SetString("APuriSavedValue", uri_.Trim());
 				PlayerPrefs.SetString("APslotNameSavedValue", slotName_);
 				PlayerPrefs.SetString("APpasswordSavedValue", password_);
 			}

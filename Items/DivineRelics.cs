@@ -52,9 +52,31 @@ public static class DivineRelics
 
 		}
 
+		if (ProgressiveLocations.pIsRelicLocationsEnabled)
+		{
+			AddPassiveRelicAsOnlyLocation(list, ProgressiveLocations.pCurrentRelicId);
+		}
+
 		ShopDecoys(list);
 
 		LootStaticDataContainer.sSingleton.pAvailableDivineRelics = list;
+	}
+
+	private static void AddPassiveRelicAsOnlyLocation(List<DivineRelicHandle> list, long locId)
+	{
+		for (int i = 0; i < 6; i++)
+		{
+			List<DivineRelicHandle> tieredRelics = new(); //hack to make endless shop not to crash :3
+			for (int j = 0; j < 3; j++)
+			{
+				tieredRelics.Add(TurnRelicToAPItem(Plugin.sSingleton.GetInstance(pDivineRelicBlankHandle), locId, j));
+			}
+			SetTierHandlers(tieredRelics);
+			foreach (var relic in tieredRelics)
+			{
+				list.Add(relic);
+			}
+		}
 	}
 
 	private static List<DivineRelicHandle> ShopDecoys(List<DivineRelicHandle> list) //also hack for shop just to be sure
@@ -152,9 +174,27 @@ public static class DivineRelics
 			}
 			try
 			{
-				// PlayerManager.sSingleton.GetPlayer(0).pDivineRelicContainer.RemovePassiveDiniveRelic(relic); //remove from pool, not from player... //apparently not necessary (and crashes the game)
-				LootStaticDataContainer.sSingleton.RemoveDivineRelicVariationsFromList(divine_relic.pHandle);
+				if (ProgressiveLocations.pIsRelicLocationsEnabled)
+				{
+					if(Connection.pSession.Locations.AllLocationsChecked.Contains(id) && LootStaticDataContainer.sSingleton.pAvailableDivineRelics[0].name != id.ToString())
+						return;
+					var list = LootStaticDataContainer.sSingleton.pAvailableDivineRelics;
+					list.Clear();
+					ProgressiveLocations.IncreaseRelicId();
+					AddPassiveRelicAsOnlyLocation(list, ProgressiveLocations.pCurrentRelicId);
+					ShopDecoy(list, true);
+					ShopDecoy(list, true);
+					ShopDecoy(list, true);
+					ShopDecoy(list, true);
+					ShopDecoy(list, true);
+				}
+				else
+				{
+					// PlayerManager.sSingleton.GetPlayer(0).pDivineRelicContainer.RemovePassiveDiniveRelic(relic); //remove from pool, not from player... //apparently not necessary (and crashes the game)
+					LootStaticDataContainer.sSingleton.RemoveDivineRelicVariationsFromList(divine_relic.pHandle);
+				}
 				AddPassiveDecoysBasedOnListCount(LootStaticDataContainer.sSingleton.pAvailableDivineRelics);
+
 			}
 			catch { }
 			Connection.pSession.Locations.CompleteLocationChecks(id);

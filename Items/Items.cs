@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Archipelago.MultiClient.Net.Helpers;
 using Archipelago.MultiClient.Net.Models;
 using Zyklus;
+using Zyklus.Inventory;
 using Zyklus.Loot;
 using Zyklus.Managers;
 using Zyklus.Player;
@@ -34,6 +35,11 @@ public class Items
 		enabledCharacters_.Add(PlayerCharacterEnum.Joey, false);
 		enabledCharacters_.Add(PlayerCharacterEnum.Apon, false);
 		enabledCharacters_.Add(PlayerCharacterEnum.Bec, false);
+
+		foreach (RemoveItemsFromPoolReason reason in Enum.GetValues(typeof(RemoveItemsFromPoolReason)))
+		{
+			itemsToRemove[reason] = new();
+		}
 	}
 
 	public void ReceiveItemsOnInit()
@@ -144,5 +150,39 @@ public class Items
 		}
 		itemsToReceiveQueue_.Clear();
 
+	}
+	internal Dictionary<RemoveItemsFromPoolReason, List<ItemHandle>> itemsToRemove = new();
+
+	internal void RemoveProblematicItems()
+	{
+		foreach (RemoveItemsFromPoolReason reason in Enum.GetValues(typeof(RemoveItemsFromPoolReason)))
+		{
+			RemoveProblematicItems(reason);
+		}
+	}
+
+	internal void RemoveProblematicItems(RemoveItemsFromPoolReason reason)
+	{
+
+		foreach (var item in itemsToRemove[reason])
+		{
+			try
+			{
+				LootStaticDataContainer.sSingleton.pAvailableConsumableList.Remove(item as ConsumableInvetoryItemAsset);
+
+			}
+			catch
+			{
+
+			}
+
+		}
+
+	}
+
+
+	public enum RemoveItemsFromPoolReason
+	{
+		ForceDivineRelicsShowUpInOrder
 	}
 }

@@ -72,9 +72,25 @@ public static class Talents
 			list.Add(TurnTalentToAPItem(Plugin.sSingleton.GetInstance(pBlankTalent), item));
 		}
 
+		if (ProgressiveLocations.pIsTalentLocationsEnabled)
+		{
+			AddTalentAsOnlyLocation(list, ProgressiveLocations.pCurrentTalentId);
+		}
+
 		AddPassiveDecoysBasedOnListCount(list);
 
 		Utils.SetFieldValue(LootStaticDataContainer.sSingleton, "available_talents_list_", list);
+	}
+
+	public static void AddTalentAsOnlyLocation(List<TalentAsset> list, long locationId)
+	{
+		if (list.Count <= 12)
+		{
+			for (int i = 0; i < 12; i++)
+			{
+				list.Add(TurnTalentToAPItem(Plugin.sSingleton.GetInstance(pBlankTalent), locationId));
+			}
+		}
 	}
 
 	private static TalentAsset TurnTalentToAPItem(TalentAsset talentAsset, long item)
@@ -191,4 +207,5 @@ public static class Talents
 		Utils.SetFieldValue(PlayerManager.sSingleton.GetPlayer(0).pTalentManager, "rune_talent_interval_", int.MaxValue); //disable rune talents from appearing, not needed to seek one for each character
 
 	}
+
 }
