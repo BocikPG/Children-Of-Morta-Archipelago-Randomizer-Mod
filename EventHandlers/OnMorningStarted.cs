@@ -160,7 +160,6 @@ public class OnMorningStarted : MonoBehaviour
             Plugin.Logger.LogInfo("End of game session");
         }
 
-
     }
     private static void OnUIStateChangePostPush(HFSM hfsm, int event_code, object sender, ListPoolInstance<object> event_parameters)
     {

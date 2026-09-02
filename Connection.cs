@@ -117,6 +117,7 @@ public class Connection
 		}
 
 		ProgressiveLocations.Init();
+		Items.sSingleton.Init();
 
 		if (aPSettings.Value<int>("forceDivineRelicsShowUpInOrder") == 1)
 		{

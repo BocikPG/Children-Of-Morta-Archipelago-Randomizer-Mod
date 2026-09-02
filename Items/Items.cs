@@ -40,6 +40,21 @@ public class Items
 		{
 			itemsToRemove[reason] = new();
 		}
+
+	}
+
+	public void Init()
+	{
+		enabledCharacters_[PlayerCharacterEnum.ALL] = false;
+		enabledCharacters_[PlayerCharacterEnum.NO_ONE] = false;
+		enabledCharacters_[PlayerCharacterEnum.John] = false;
+		enabledCharacters_[PlayerCharacterEnum.Mark] = false;
+		enabledCharacters_[PlayerCharacterEnum.Kevin] = false;
+		enabledCharacters_[PlayerCharacterEnum.Linda] = false;
+		enabledCharacters_[PlayerCharacterEnum.Lucy] = false;
+		enabledCharacters_[PlayerCharacterEnum.Joey] = false;
+		enabledCharacters_[PlayerCharacterEnum.Apon] = false;
+		enabledCharacters_[PlayerCharacterEnum.Bec] = false;
 	}
 
 	public void ReceiveItemsOnInit()
@@ -58,20 +73,12 @@ public class Items
 
 	public void ReceiveItem(ReceivedItemsHelper helper)
 	{
-		if (DivineRelics.pDivineRelics == null) //connected before game init - doesn't care about items
-		{
-			helper.PeekItem();
-			helper.DequeueItem();
-			return;
-		}
-
 		if (General.sIsCeaseFireInProgress) //game is paused
 		{
 			itemsToReceiveQueue_.Add(helper);
 			General.sSingleton.OnCeaseFireStateChanged += OnCeaseFireStateChanged;
 			return;
 		}
-
 
 		ReceiveItemFromHelper(helper);
 	}
@@ -101,9 +108,6 @@ public class Items
 
 	private static void ReceiveItemFromHelper(ReceivedItemsHelper helper)
 	{
-		var player = PlayerManager.sSingleton.GetPlayer(0); // maybe player 2 too?
-		var lootContainer = LootStaticDataContainer.sSingleton;
-
 		var peeked = helper.PeekItem();
 		if (peeked == null)
 			return;
@@ -112,6 +116,18 @@ public class Items
 
 		if (UnlockCharacter(peeked, helper))
 			return;
+
+		if (DivineRelics.pDivineRelics == null) //connected before game init - doesn't care about items
+		{
+			Plugin.Logger.LogInfo("game not inited");
+			helper.PeekItem();
+			helper.DequeueItem();
+			return;
+		}
+
+		var player = PlayerManager.sSingleton.GetPlayer(0); // maybe player 2 too?
+		var lootContainer = LootStaticDataContainer.sSingleton;
+
 		if (DivineRelics.SearchForRelicByNameAndAddItToPlayer(peeked.ItemName, lootContainer, false, helper))
 			return;
 		if (Talents.IfIsTalentLearnIt(peeked.ItemName, player, helper))
