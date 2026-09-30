@@ -49,14 +49,18 @@ public class APItemsUtils
 		var session = Connection.pSession;
 		if (!session.Socket.Connected)
 		{
+			Plugin.Logger.LogInfo("SetUpAPItems - no connected");
 			return;
 		}
 
 		var talents = LootStaticDataContainer.sSingleton.pAvailableTalents;
 		var relics = LootStaticDataContainer.sSingleton.pAvailableDivineRelics;
 		var consumable = LootStaticDataContainer.sSingleton.pAvailableConsumableList;
-		if (relics == null || talents == null || consumable == null)
+		if (relics == null || talents == null || consumable == null || relics.Count == 0 || talents.Count == 0 || consumable.Count == 0)
+		{
+			Plugin.Logger.LogInfo("SetUpAPItems - no loot");
 			return;
+		}
 
 
 		Talents.BackUpTalents(talents);
@@ -84,14 +88,20 @@ public class APItemsUtils
 
 		if (ProgressiveLocations.pIsRelicLocationsEnabled)
 		{
-			ProgressiveLocations.pMaxRelicId = relicLocIdsList.Max();
+			if (relicLocIdsList.Count > 0)
+			{
+				ProgressiveLocations.pMaxRelicId = relicLocIdsList.Max();
+			}
 			relicLocIdsList.Clear();
 			Items.sSingleton.RemoveProblematicItems(Items.RemoveItemsFromPoolReason.ForceDivineRelicsShowUpInOrder);
 		}
 
 		if (ProgressiveLocations.pIsTalentLocationsEnabled)
 		{
-			ProgressiveLocations.pMaxTalentId = talentLocIdsList.Max();
+			if (talentLocIdsList.Count > 0)
+			{
+				ProgressiveLocations.pMaxTalentId = talentLocIdsList.Max();
+			}
 			talentLocIdsList.Clear();
 		}
 

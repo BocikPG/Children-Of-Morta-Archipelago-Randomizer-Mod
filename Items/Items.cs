@@ -14,6 +14,7 @@ public class Items
 {
 	public static Items sSingleton;
 	private List<ReceivedItemsHelper> itemsToReceiveQueue_ = new();
+	private List<ItemInfo> itemsInfoToReceiveQueue_ = new();
 	private static Dictionary<PlayerCharacterEnum, bool> enabledCharacters_ = new();
 
 	public static Dictionary<PlayerCharacterEnum, bool> pEnabledCharacters
@@ -64,23 +65,36 @@ public class Items
 
 		foreach (var item in Connection.pSession.Items.AllItemsReceived)
 		{
-			if (UnlockCharacter(item))
-			{
-				continue;
-			}
+			ReceiveItem(item);
+
 		}
+	}
+
+	public void GiveItems()
+	{
+		if (DivineRelics.pDivineRelics == null) //connected before game init - doesn't care about items
+			return;
+		if (General.sIsCeaseFireInProgress) //game is paused
+			return;
+		foreach (var itemHelper in itemsToReceiveQueue_)
+		{
+			GiveItemToPlayer(itemHelper);
+		}
+		foreach (var itemInfo in itemsInfoToReceiveQueue_)
+		{
+			GiveItemToPlayer(itemInfo);
+		}
+		itemsToReceiveQueue_.Clear();
+		itemsInfoToReceiveQueue_.Clear();
 	}
 
 	public void ReceiveItem(ReceivedItemsHelper helper)
 	{
-		if (General.sIsCeaseFireInProgress) //game is paused
-		{
-			itemsToReceiveQueue_.Add(helper);
-			General.sSingleton.OnCeaseFireStateChanged += OnCeaseFireStateChanged;
-			return;
-		}
-
-		ReceiveItemFromHelper(helper);
+		itemsToReceiveQueue_.Add(helper);
+	}
+	public void ReceiveItem(ItemInfo info)
+	{
+		itemsInfoToReceiveQueue_.Add(info);
 	}
 
 	public void GiveItemsToPlayer(PlayerBase player, LootStaticDataContainer lootContainer, IEnumerable<ItemInfo> items)
@@ -106,32 +120,42 @@ public class Items
 		}
 	}
 
-	private static void ReceiveItemFromHelper(ReceivedItemsHelper helper)
+	private static void GiveItemToPlayer(ItemInfo itemInfo)
+	{
+		if (DivineRelics.pDivineRelics == null) //connected before game init - doesn't care about items
+		{
+			Plugin.Logger.LogInfo("game not inited");
+			return;
+		}
+
+		Plugin.Logger.LogInfo("item seeking " + itemInfo.ItemName);
+
+		if (UnlockCharacter(itemInfo))
+			return;
+
+		var player = PlayerManager.sSingleton.GetPlayer(0); // maybe player 2 too?
+		var lootContainer = LootStaticDataContainer.sSingleton;
+
+		if (DivineRelics.SearchForRelicByNameAndAddItToPlayer(itemInfo.ItemName, lootContainer, false))
+			return;
+		if (Talents.IfIsTalentLearnIt(itemInfo.ItemName, player))
+			return;
+	}
+
+	private static void GiveItemToPlayer(ReceivedItemsHelper helper)
 	{
 		var peeked = helper.PeekItem();
 		if (peeked == null)
 			return;
 
-		Plugin.Logger.LogInfo("item seeking " + peeked.ItemName);
-
-		if (UnlockCharacter(peeked, helper))
-			return;
-
 		if (DivineRelics.pDivineRelics == null) //connected before game init - doesn't care about items
 		{
 			Plugin.Logger.LogInfo("game not inited");
-			helper.PeekItem();
 			helper.DequeueItem();
 			return;
 		}
 
-		var player = PlayerManager.sSingleton.GetPlayer(0); // maybe player 2 too?
-		var lootContainer = LootStaticDataContainer.sSingleton;
-
-		if (DivineRelics.SearchForRelicByNameAndAddItToPlayer(peeked.ItemName, lootContainer, false, helper))
-			return;
-		if (Talents.IfIsTalentLearnIt(peeked.ItemName, player, helper))
-			return;
+		GiveItemToPlayer(peeked);
 
 		helper.DequeueItem();
 	}
@@ -153,20 +177,6 @@ public class Items
 
 	}
 
-	private void OnCeaseFireStateChanged()
-	{
-		if (General.sIsCeaseFireInProgress)
-			return;
-
-		General.sSingleton.OnCeaseFireStateChanged -= OnCeaseFireStateChanged;
-
-		foreach (var helper in itemsToReceiveQueue_)
-		{
-			ReceiveItemFromHelper(helper);
-		}
-		itemsToReceiveQueue_.Clear();
-
-	}
 	internal Dictionary<RemoveItemsFromPoolReason, List<ItemHandle>> itemsToRemove = new();
 
 	internal void RemoveProblematicItems()

@@ -68,6 +68,7 @@ public class OnMorningStarted : MonoBehaviour
         SetUpLocalization();
         SetUpPlayableCharacters();
         SetUpEndlessShop();
+        APItemsUtils.SetUpAPItems();
 
         static void HookUpToEvent()
         {

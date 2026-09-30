@@ -1,5 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Altar.HFSM;
+using Altar.Pool;
 using ArchipelagoRandomizer.EventHandlers;
 using ArchipelagoRandomizer.Items;
 using ArchipelagoRandomizer.UI;
@@ -15,7 +17,7 @@ using Zyklus.UI;
 namespace ArchipelagoRandomizer;
 
 
-[BepInPlugin("bocik.plugins.archipelago", "Archipelago Randomizer", "0.1.0")]
+[BepInPlugin("bocik.plugins.archipelago", "Archipelago Randomizer", "0.3.0")]
 public class Plugin : BaseUnityPlugin
 {
     internal static new ManualLogSource Logger;
@@ -28,18 +30,20 @@ public class Plugin : BaseUnityPlugin
     private bool initedBefore_ = false;
     private Vector2Int lastScreenSize_;
 
-    public void Update() 
+    public void Update()
     {
-        DebugPlugin.Update(); //DEBUG: remove if want to debug 
+        //DebugPlugin.Update(); //DEBUG: remove if want to debug 
 
         Vector2Int currentScreenSize = new Vector2Int(Screen.width, Screen.height);
-        
+
         // Check if the size has changed
         if (currentScreenSize != lastScreenSize_)
         {
             lastScreenSize_ = currentScreenSize;
             OnScreenSizeChanged?.Invoke(); // Notify all subscribers
         }
+
+        Items.Items.sSingleton.GiveItems();
     }
 
     private void Awake()
@@ -64,18 +68,19 @@ public class Plugin : BaseUnityPlugin
 
     public IEnumerator WaitOnGameStart()
     {
-        while (ProfileManager.sSingleton == null)
+        while (GameFlowInterface.sSingleton == null)
         {
             // Wait for the next frame
             yield return null;
         }
-        ProfileManager.sSingleton.pLocalUserData.SetEndlessUnlockState(true); //unlock endless (on game start)
+        GameFlowInterface.sSingleton.GetFieldValue<UIManagerHFSM>("ui_manager_hfsm_").pHFSM.PreEventPush += OnUIStateChangePrePush;
+        GameFlowInterface.sSingleton.GetFieldValue<UIManagerHFSM>("ui_manager_hfsm_").pHFSM.PreEventPush += OnUIStateChangePostPush;
     }
 
 
     public IEnumerator WaitAndInit()
     {
-        if(initedBefore_)
+        if (initedBefore_)
             yield break;
         while (ZyklusSceneManager.sSingleton == null || PlayerManager.sSingleton == null || HomeManager.sSingleton == null || GameFlowInterface.sSingleton == null || EndlessShopManager.sSingleton == null)
         {
@@ -92,7 +97,7 @@ public class Plugin : BaseUnityPlugin
 
     private void OnGUI()
     {
-        if(GUIManager.sSingleton == null)
+        if (GUIManager.sSingleton == null)
             return;
 
         GUIManager.sSingleton.OnGUI();
@@ -102,6 +107,23 @@ public class Plugin : BaseUnityPlugin
     public T GetInstance<T>(T prefab) where T : UnityEngine.Object
     {
         return Instantiate(prefab);
+    }
+
+    private static void OnUIStateChangePrePush(HFSM hfsm, int event_code, object sender, ListPoolInstance<object> event_parameters)
+    {
+        if (event_code == 856) //Game mode select Menu
+        {
+            ProfileManager.sSingleton.pLocalUserData.SetEndlessUnlockState(true); //unlock endless (on game start)
+            GameModeSelectMenu.sSingleton.SetFieldValue("locked_", false);
+        }
+    }
+    private static void OnUIStateChangePostPush(HFSM hfsm, int event_code, object sender, ListPoolInstance<object> event_parameters)
+    {
+        if (event_code == 856) //Game mode select Menu
+        {
+            ProfileManager.sSingleton.pLocalUserData.SetEndlessUnlockState(true); //unlock endless (on game start)
+            GameModeSelectMenu.sSingleton.SetFieldValue("locked_", false);
+        }
     }
 
     //notes
