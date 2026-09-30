@@ -72,8 +72,6 @@ public class Items
 
 	public void GiveItems()
 	{
-		if (DivineRelics.pDivineRelics == null) //connected before game init - doesn't care about items
-			return;
 		if (General.sIsCeaseFireInProgress) //game is paused
 			return;
 		foreach (var itemHelper in itemsToReceiveQueue_)
@@ -122,15 +120,12 @@ public class Items
 
 	private static void GiveItemToPlayer(ItemInfo itemInfo)
 	{
-		if (DivineRelics.pDivineRelics == null) //connected before game init - doesn't care about items
-		{
-			Plugin.Logger.LogInfo("game not inited");
-			return;
-		}
-
 		Plugin.Logger.LogInfo("item seeking " + itemInfo.ItemName);
 
 		if (UnlockCharacter(itemInfo))
+			return;
+		
+		if (DivineRelics.pDivineRelics == null) //connected before game init - doesn't care about items
 			return;
 
 		var player = PlayerManager.sSingleton.GetPlayer(0); // maybe player 2 too?
@@ -147,13 +142,6 @@ public class Items
 		var peeked = helper.PeekItem();
 		if (peeked == null)
 			return;
-
-		if (DivineRelics.pDivineRelics == null) //connected before game init - doesn't care about items
-		{
-			Plugin.Logger.LogInfo("game not inited");
-			helper.DequeueItem();
-			return;
-		}
 
 		GiveItemToPlayer(peeked);
 
