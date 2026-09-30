@@ -30,7 +30,7 @@ public class Plugin : BaseUnityPlugin
 
     public void Update() 
     {
-        //DebugPlugin.Update(); //DEBUG: remove if want to debug 
+        DebugPlugin.Update(); //DEBUG: remove if want to debug 
 
         Vector2Int currentScreenSize = new Vector2Int(Screen.width, Screen.height);
         
@@ -58,7 +58,18 @@ public class Plugin : BaseUnityPlugin
         lastScreenSize_ = new Vector2Int(Screen.width, Screen.height);
 
         new GUIManager();
+        StartCoroutine(nameof(WaitOnGameStart));
         //pConnection.CreateSession("localhost:38281").Connect("PlayerName");
+    }
+
+    public IEnumerator WaitOnGameStart()
+    {
+        while (ProfileManager.sSingleton == null)
+        {
+            // Wait for the next frame
+            yield return null;
+        }
+        ProfileManager.sSingleton.pLocalUserData.SetEndlessUnlockState(true); //unlock endless (on game start)
     }
 
 

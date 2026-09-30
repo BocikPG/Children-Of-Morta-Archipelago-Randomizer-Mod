@@ -58,8 +58,6 @@ public class OnMorningStarted : MonoBehaviour
     {
         HookUpToEvent();
 
-        ProfileManager.sSingleton.pLocalUserData.SetEndlessUnlockState(true); //unlock endless (on game start)
-
         TalentButtonSelected.SetUpTalentButtons();
 
         GameFlowInterface.sSingleton.GetFieldValue<UIManagerHFSM>("ui_manager_hfsm_").pHFSM.PreEventPush += OnUIStateChangePrePush;
