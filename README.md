@@ -2,6 +2,7 @@
 This is an [Archipelago](https://archipelago.gg) implementation enabling Children of Morta to be played in the multiworld randomizer.
 
 # <ins>Currently ONLY Endless mode (Zyklus/Family trials) is supported.</ins>
+But it is unlocked from the start by the mod :)
 
 # What is Archipelago?
 Many answers are [here](https://archipelago.gg/faq/en/) but in the nutshell: Items you normally collect are replaced with random items. 
