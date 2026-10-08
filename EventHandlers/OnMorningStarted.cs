@@ -116,11 +116,12 @@ public class OnMorningStarted : MonoBehaviour
                 try
                 {
                     session.DataStorage["ChildrenOfMortaTimesWon"].Initialize(0);
-                    session.DataStorage["ChildrenOfMortaTimesWon"] += (long)1;
 
                     long number = (long)Connection.pSession.DataStorage["ChildrenOfMortaTimesWon"];
                     session.Locations.CompleteLocationChecks(APItemsUtils.pBaseLocationsId + (long)currentCharacter, APItemsUtils.pBaseLocationsId + 8 + number);
 
+                    session.DataStorage["ChildrenOfMortaTimesWon"] += (long)1;
+                    
                     var aPSettings = session.DataStorage.GetSlotData()["settings"] as JObject;
                     if (aPSettings.Value<int>("isEndlessMode") == 1)
                     {

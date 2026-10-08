@@ -16,6 +16,9 @@ public static class OnMatrixGenDone
 
     public static void GiveReceivedItems(Matrix matrix)
     {
+        if(matrix.pFloorData.pDebugName == "Endless-Shop") //don't receive items in shop area (don't clutter entrance, no need to fight)
+			return;
+        
         var player = PlayerManager.sSingleton.GetPlayer(0); // maybe player 2 too?
         var lootContainer = LootStaticDataContainer.sSingleton;
 

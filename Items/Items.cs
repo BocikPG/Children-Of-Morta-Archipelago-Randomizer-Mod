@@ -124,11 +124,20 @@ public class Items
 
 		if (UnlockCharacter(itemInfo))
 			return;
-		
+
 		if (DivineRelics.pDivineRelics == null) //connected before game init - doesn't care about items
 			return;
 
-		var player = PlayerManager.sSingleton.GetPlayer(0); // maybe player 2 too?
+		PlayerBase player;
+		try
+		{
+			player = PlayerManager.sSingleton.GetPlayer(0); // maybe player 2 too?
+		}
+		catch (Exception e)
+		{
+			Plugin.Logger.LogError("GiveItemToPlayer: " + e.Message + e.StackTrace);
+			return;
+		}
 		var lootContainer = LootStaticDataContainer.sSingleton;
 
 		if (DivineRelics.SearchForRelicByNameAndAddItToPlayer(itemInfo.ItemName, lootContainer, false))

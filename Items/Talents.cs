@@ -204,6 +204,8 @@ public static class Talents
 
 	internal static void OnMatrixGenDone(Matrix matrix)
 	{
+		if(matrix.pFloorData.pDebugName == "Endless-Shop") //don't receive items in shop area (don't clutter entrance, no need to fight)
+			return;
 		Utils.SetFieldValue(PlayerManager.sSingleton.GetPlayer(0).pTalentManager, "rune_talent_interval_", int.MaxValue); //disable rune talents from appearing, not needed to seek one for each character
 
 	}
