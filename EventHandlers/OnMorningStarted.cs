@@ -204,21 +204,29 @@ public class OnMorningStarted : MonoBehaviour
         }
         else if (event_code == (int)UIManager_EventsEnum.SHOWING_CHARACTER_SELECT_MENU_REQUESTED)
         {
+            UI.UIManager.sSingleton.pShowChatAlways = true;
             GUIManager.sSingleton.pIsVisible = true;
         }
         else if (event_code == (int)UIManager_EventsEnum.HIDING_CHARACTER_SELECT_MENU_REQUESTED)
         {
+            UI.UIManager.sSingleton.pShowChatAlways = false;
             GUIManager.sSingleton.pIsVisible = false;
         }
         else if (event_code == (int)UIManager_EventsEnum.SHOWING_PAUSE_MENU_REQUESTED)
         {
+            UI.UIManager.sSingleton.pShowChatAlways = true;
             GUIManager.sSingleton.pIsVisible = true;
         }
         else if (event_code == (int)UIManager_EventsEnum.HIDING_PAUSE_MENU_REQUESTED)
         {
+            UI.UIManager.sSingleton.pShowChatAlways = false;
             GUIManager.sSingleton.pIsVisible = false;
         }
-        //Plugin.Logger.LogInfo("ui change triggered " + event_code);
+        else if (event_code == (int)UIManager_EventsEnum.HIDING_FLOOR_LOADING_REQUESTED)
+        {
+            UI.UIManager.sSingleton.SetChatBoxActive(false, UI.UIManager.ChatBoxSetCause.FloorLoadingEnd);
+            GUIManager.sSingleton.pIsVisible = false;
+        }
 
     }
 
@@ -264,6 +272,8 @@ public class OnMorningStarted : MonoBehaviour
     {
         if (ProfileManager.sSingleton.pGameMode != GameMode.Endless || !Connection.pIsConnected)
             return;
+
+        UI.UIManager.sSingleton.Init();
 
         SetUpLocalization();
 

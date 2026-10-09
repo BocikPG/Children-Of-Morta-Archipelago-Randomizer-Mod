@@ -54,12 +54,12 @@ public class Connection
 		if(player == null)
 			return;
         player.ForceDie();
-		GUIManager.sSingleton.LogMessage($"> {deathLink.Source} {deathLink.Cause}");
+		APLogs.sSingleton.LogMessage($"> {deathLink.Source} {deathLink.Cause}");
     }
 
     private void OnMessageReceived(LogMessage message)
 	{
-		GUIManager.sSingleton.LogMessage(message.ToString());
+		APLogs.sSingleton.LogMessage(message.ToString());
 	}
 
 	private void OnErrorReceived(Exception e, string message)

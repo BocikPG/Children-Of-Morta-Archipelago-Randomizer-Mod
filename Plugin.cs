@@ -25,6 +25,8 @@ public class Plugin : BaseUnityPlugin
     public static Plugin sSingleton;
     public Connection pConnection;
     public Items.Items pItems;
+    public UI.UIManager pUIManager;
+    public APLogs pAPLogs;
     public static System.Action OnScreenSizeChanged;
 
     private bool initedBefore_ = false;
@@ -43,6 +45,8 @@ public class Plugin : BaseUnityPlugin
             OnScreenSizeChanged?.Invoke(); // Notify all subscribers
         }
 
+        UI.UIManager.sSingleton.Update();
+
         Items.Items.sSingleton.GiveItems();
     }
 
@@ -56,6 +60,8 @@ public class Plugin : BaseUnityPlugin
             sSingleton = this;
 
         pItems = new();
+        pUIManager = new();
+        pAPLogs = new();
 
         pConnection = new();
 
@@ -82,7 +88,7 @@ public class Plugin : BaseUnityPlugin
     {
         if (initedBefore_)
             yield break;
-        while (ZyklusSceneManager.sSingleton == null || PlayerManager.sSingleton == null || HomeManager.sSingleton == null || GameFlowInterface.sSingleton == null || EndlessShopManager.sSingleton == null)
+        while (ZyklusSceneManager.sSingleton == null || PlayerManager.sSingleton == null || HomeManager.sSingleton == null || GameFlowInterface.sSingleton == null || EndlessShopManager.sSingleton == null || InGameMenuManager.sSingleton == null || CharacterSelect.sActiveMenu == null || PauseMenuComponent.sSingleton == null)
         {
             // Wait for the next frame
             yield return null;
@@ -92,6 +98,9 @@ public class Plugin : BaseUnityPlugin
         OnMatrixGenDone.SubscribeToMatrixGenDone();
         //ZyklusSceneManager.sSingleton.OnMaterialPlaceChanged += TalentsManager.SetTalents;
         ZyklusSceneManager.sSingleton.OnMaterialPlaceChanged += APItemsUtils.SetUpAPItems;
+
+        pUIManager.Init();
+
         initedBefore_ = true;
     }
 

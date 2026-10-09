@@ -19,15 +19,14 @@ public class GUIManager
 	private string password_;
 
 	// message vars
-	private List<string> logLines_ = new();
-	private int maxLines_ = 8;
+
+
 	private Vector2 scrollView_;
 	private Rect window_;
 	private Rect scroll_;
 	private Rect text_;
-	private string scrollText_;
 	private GUIStyle textStyle_;
-	private float lastUpdateTime_;
+
     private int scrollDepth_;
     private const float HideTimeout = 10f;
 
@@ -62,7 +61,7 @@ public class GUIManager
 		string statusMessage;
 		if (Connection.pIsConnected)
 		{
-			DrawMessageLog();
+			//DrawMessageLog();
 
 			if (!pIsVisible)
 				return;
@@ -102,34 +101,19 @@ public class GUIManager
 		}
 	}
 
-	public void LogMessage(string message)
-	{
-		if (logLines_.Count >= maxLines_)
-		{
-			logLines_.RemoveAt(0);
-		}
-		logLines_.Add(message);
-
-		foreach (var line in logLines_)
-		{
-			scrollText_ += $"> {line}\n";
-		}
-
-		lastUpdateTime_ = Time.time2;
-		scrollView_ = new Vector2(0, scrollDepth_);
-	}
-
 	private void DrawMessageLog()
 	{
-		if (logLines_.Count == 0) return;
+		var logs = APLogs.sSingleton;
+		if (logs.LogLines.Count == 0) return;
 
 
 
-		if (pIsVisible || Time.time2 - lastUpdateTime_ < HideTimeout)
+		if (pIsVisible || Time.time2 - logs.LastUpdateTime < HideTimeout)
 		{
+			scrollView_ = new Vector2(0, scrollDepth_);
 			scrollView_ = GUI.BeginScrollView(window_, scrollView_, scroll_);
 			GUI.Box(text_, "");
-			GUI.Box(text_, scrollText_, textStyle_);
+			GUI.Box(text_, logs.ScrollText, textStyle_);
 			GUI.EndScrollView();
 
 			CommandText = GUI.TextField(CommandTextRect, CommandText);

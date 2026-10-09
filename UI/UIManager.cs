@@ -7,7 +7,7 @@ using TMPro;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using Zyklus.UI;
-using System.Collections.ObjectModel;
+using Zyklus;
 
 namespace ArchipelagoRandomizer.UI;
 
@@ -19,36 +19,105 @@ namespace ArchipelagoRandomizer.UI;
 public class UIManager
 {
 	public static UIManager sSingleton;
-	public List<MenuBase> pMenus = new();
+	public TMP_Text pTextBox;
+	public ScrollRect pScrollRect;
+	public GameObject pObjectToDisable;
 	public Sprite pButtonSprite;
-	public Dictionary<MenuBase, GameObject> pPanels = new();
+	public bool pShowChatAlways
+	{
+		get { return showChatAlways_; }
+		set
+		{
+			showChatAlways_ = value;
+			SetChatBoxActive(value, ChatBoxSetCause.AlwaysShowStateChange);
+		}
+	}
+
+	private bool showChatAlways_;
+
+	private const float showInGameTime_ = 8f;
+	private float showInGameTimer_ = 8f;
 
 	public UIManager()
 	{
 		sSingleton = this;
 	}
 
-	public void DrawOnCanvas(MenuBase menu)
+	public void Update()
 	{
-		UIPanel panel = CreateAPConnectionDialogUI(menu);
-		panel.transform.SetParent(menu.transform, false);
+		if (showInGameTimer_ > 0)
+		{
+			showInGameTimer_ -= Time.deltaTime2;
+			if (showInGameTimer_ <= 0)
+			{
+				SetChatBoxActive(false, ChatBoxSetCause.TimerExpired);
+			}
+		}
+	}
 
-		menu.pPanels.Add(panel);
+	public void Init()
+	{
+		if (pTextBox != null)
+			return;
 
-		pPanels.Add(menu, panel.gameObject);
+		CreateAPTextWindowOnCanvas(GameObject.Find("Always Overlay").GetComponent<Canvas>());
+
+		APLogs.OnNewLogMessage -= OnNewLogMessage;
+		APLogs.OnNewLogMessage += OnNewLogMessage;
+
+		OnNewLogMessage();
+	}
+
+	private void OnNewLogMessage()
+	{
+
+		SetChatBoxActive(true, ChatBoxSetCause.NewMessageReceived);
+
+		pTextBox.text = APLogs.sSingleton.ScrollText;
+		pScrollRect.normalizedPosition = new Vector2(0, 0);
+
+		showInGameTimer_ = showInGameTime_;
+	}
+
+	public void SetChatBoxActive(bool state, ChatBoxSetCause cause)
+	{
+		if (pShowChatAlways || General.sIsCeaseFireInProgress) // or game is paused - pause menu is not good indicator...
+		{
+			if (cause == ChatBoxSetCause.FloorLoadingEnd)
+			{
+				pObjectToDisable.SetActive(state);
+				return;
+			}
+
+			pObjectToDisable.SetActive(true);
+			return;
+		}
+
+		if (cause == ChatBoxSetCause.AlwaysShowStateChange || cause == ChatBoxSetCause.Other)
+		{
+			if (showInGameTimer_ > 0)
+			{
+				pObjectToDisable.SetActive(true);
+				return;
+			}
+			else
+			{
+				pObjectToDisable.SetActive(state);
+				return;
+			}
+		}
+
+		pObjectToDisable.SetActive(state);
 
 	}
 
-	public void AddConnectionPanel()
+	public enum ChatBoxSetCause
 	{
-		EnsureEventSystem();
-		foreach (var menu in pMenus)
-		{
-			UIPanel panel = CreateAPConnectionDialogUI(menu);
-			panel.transform.SetParent(menu.transform, false);
-
-			pPanels.Add(menu, panel.gameObject);
-		}
+		AlwaysShowStateChange,
+		TimerExpired,
+		NewMessageReceived,
+		FloorLoadingEnd,
+		Other
 	}
 
 	public void SetSprites()
@@ -56,13 +125,93 @@ public class UIManager
 		pButtonSprite = null;
 	}
 
+	private void CreateAPTextWindowOnCanvas(Canvas canvas)
+	{
+		GameObject panel = new GameObject("APConnectionDialogUI");
+		panel.transform.SetParent(canvas.transform);
+
+		CreateBaseRect(panel, 300, 260, 0, 0);
+
+		panel.transform.localPosition = new Vector3(350, -90, 0);
+		panel.transform.localScale = new Vector3(1, 1, 1);
+
+		var scrollRect = panel.AddComponent<ScrollRect>();
+		scrollRect.horizontal = false;
+		scrollRect.vertical = true;
+		scrollRect.movementType = ScrollRect.MovementType.Clamped;
+		scrollRect.scrollSensitivity = 20f;
+
+		var viewportGO = new GameObject("Viewport");
+		var viewportRect = viewportGO.AddComponent<RectTransform>();
+		viewportRect.SetParent(panel.transform, false);
+		viewportRect.anchorMin = Vector2.zero;
+		viewportRect.anchorMax = Vector2.one;
+		viewportRect.pivot = new Vector2(0, 1);
+		viewportRect.offsetMin = Vector2.zero;
+		viewportRect.offsetMax = Vector2.zero;
+		viewportGO.AddComponent<RectMask2D>(); // or Image + Mask
+		scrollRect.viewport = viewportRect;
+
+
+		var textGameObject = new GameObject("TextBox");
+		var textRect = textGameObject.AddComponent<RectTransform>();
+		var textBox = textGameObject.AddComponent<TextMeshProUGUI>();
+		textRect.SetParent(viewportRect, false);
+
+		textRect.anchorMin = new Vector2(0, 1);
+		textRect.anchorMax = new Vector2(1, 1);   // stretch horizontally with viewport width
+		textRect.pivot = new Vector2(0, 1);
+		textRect.anchoredPosition = Vector2.zero;
+		textRect.sizeDelta = new Vector2(0, 0);   // height driven by ContentSizeFitter
+
+		// TMP sizing
+		textBox.fontSize = 14;
+		textBox.alignment = TextAlignmentOptions.TopLeft;
+		textBox.enableWordWrapping = true;
+		textBox.margin = new Vector4(8, 8, 8, 8); // small padding from the edges
+
+		// Grow vertically to fit content -> this is what the ScrollRect scrolls
+		var fitter = textGameObject.AddComponent<ContentSizeFitter>();
+		fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained; // width = viewport width
+		fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+		scrollRect.content = textRect;
+
+		pTextBox = textBox;
+		pObjectToDisable = panel;
+		pScrollRect = scrollRect;
+	}
+
+	private void CreateBaseRect(GameObject panel, float sizeX, float sizeY, float anchoredPosX, float anchoredPosY)
+	{
+		RectTransform panelRect = panel.AddComponent<RectTransform>();
+		panelRect.sizeDelta = new Vector2(sizeX, sizeY);
+		panelRect.anchorMin = new Vector2(0, 1);
+		panelRect.anchorMax = new Vector2(0, 1);
+		panelRect.pivot = new Vector2(0, 1);
+		panelRect.anchoredPosition = new Vector2(anchoredPosX, anchoredPosY);
+
+		Image panelImage = panel.AddComponent<Image>();
+		if (pButtonSprite != null)
+			panelImage.sprite = pButtonSprite;
+		else
+			panelImage.color = new(0.15f, 0.15f, 0.15f, 0.80f);
+
+	}
+
+
+
+
+	// Because of how game handles input connection can't be don't with this method
+	// Leaving because MAYBE sometime in the future will overcome this COPIUM
+
 	private UIPanel CreateAPConnectionDialogUI(MenuBase menu)
 	{
 		GameObject panel = new GameObject("APConnectionDialogUI");
 
 		var panelUI = panel.AddComponent<UIPanel>();
 
-		CreateBaseRect(panel);
+		CreateBaseRect(panel, 450, 350, 550, -300);
 		var mainHorizontalGroup = CreateGroup<HorizontalLayoutGroup>(panel, "MainHorizontalGroup", new Vector2(400, 350), true, false);
 
 		var array = CreateTextBoxes(mainHorizontalGroup.gameObject, menu);
@@ -75,23 +224,10 @@ public class UIManager
 
 		return panelUI;
 
-		void CreateBaseRect(GameObject panel)
-		{
-			RectTransform panelRect = panel.AddComponent<RectTransform>();
-			panelRect.sizeDelta = new Vector2(450, 350);
-			panelRect.anchorMin = new Vector2(1, 0);
-			panelRect.anchorMax = new Vector2(1, 0);
-			panelRect.anchoredPosition = Vector2.zero;
 
-			Image panelImage = panel.AddComponent<Image>();
-			if (pButtonSprite != null)
-				panelImage.sprite = pButtonSprite;
-			else
-				panelImage.color = new(0.15f, 0.15f, 0.15f, 0.95f);
-
-		}
 
 	}
+
 	private UIElement[] CreateTextBoxes(GameObject parent, MenuBase menu)
 	{
 		var verticalTextGroup = CreateGroup<VerticalLayoutGroup>(parent, "VerticalTextGroup", new Vector2(160, 350), false, true);
@@ -222,57 +358,57 @@ public class UIManager
 	private void OnPostPush()
 	{
 		// OnMorningStarted - to show/close ap ui at proper times
-        // else if (event_code == (int)UIManager_EventsEnum.SHOWING_CHARACTER_SELECT_MENU_REQUESTED)
-        // {
-        //     var canvases = UI.UIManager.sSingleton.pMenus;
+		// else if (event_code == (int)UIManager_EventsEnum.SHOWING_CHARACTER_SELECT_MENU_REQUESTED)
+		// {
+		//     var canvases = UI.UIManager.sSingleton.pMenus;
 
-        //     var canvas = CharacterSelect.sActiveMenu;
-        //     Plugin.Logger.LogWarning("kisiel2");
-        //     if (canvas != null)
-        //     {
-        //         Plugin.Logger.LogWarning("kisiel3");
-        //         if (!canvases.Contains(canvas))
-        //         {
-        //             canvases.Add(canvas);
-        //             Plugin.Logger.LogWarning("kisiel4");
-        //             UI.UIManager.sSingleton.DrawOnCanvas(canvas);
-        //         }
-        //         else
-        //         {
-        //             UI.UIManager.sSingleton.pPanels[canvas].SetActive(true);
-        //         }
-        //     }
-        // }
-        // else if (event_code == (int)UIManager_EventsEnum.HIDING_CHARACTER_SELECT_MENU_REQUESTED)
-        // {
-        //     var menu = CharacterSelect.sActiveMenu;
-        //     if (menu != null)
-        //         if (UI.UIManager.sSingleton.pPanels.TryGetValue(menu, out var value))
-        //             value.SetActive(false);
-        // }
-        // else if (event_code == (int)UIManager_EventsEnum.SHOWING_PAUSE_MENU_REQUESTED)
-        // {
-        //     var menus = UI.UIManager.sSingleton.pMenus;
+		//     var canvas = CharacterSelect.sActiveMenu;
+		//     Plugin.Logger.LogWarning("kisiel2");
+		//     if (canvas != null)
+		//     {
+		//         Plugin.Logger.LogWarning("kisiel3");
+		//         if (!canvases.Contains(canvas))
+		//         {
+		//             canvases.Add(canvas);
+		//             Plugin.Logger.LogWarning("kisiel4");
+		//             UI.UIManager.sSingleton.DrawOnCanvas(canvas);
+		//         }
+		//         else
+		//         {
+		//             UI.UIManager.sSingleton.pPanels[canvas].SetActive(true);
+		//         }
+		//     }
+		// }
+		// else if (event_code == (int)UIManager_EventsEnum.HIDING_CHARACTER_SELECT_MENU_REQUESTED)
+		// {
+		//     var menu = CharacterSelect.sActiveMenu;
+		//     if (menu != null)
+		//         if (UI.UIManager.sSingleton.pPanels.TryGetValue(menu, out var value))
+		//             value.SetActive(false);
+		// }
+		// else if (event_code == (int)UIManager_EventsEnum.SHOWING_PAUSE_MENU_REQUESTED)
+		// {
+		//     var menus = UI.UIManager.sSingleton.pMenus;
 
-        //     var menu = PauseMenuComponent.sSingleton; // pCanvas is not set
-        //     if (menu == null)
-        //         return;
-        //     if (!menus.Contains(menu))
-        //     {
-        //         menus.Add(menu);
-        //         UI.UIManager.sSingleton.DrawOnCanvas(menu);
-        //     }
-        //     else
-        //     {
-        //         UI.UIManager.sSingleton.pPanels[menu].SetActive(true);
-        //     }
-        // }
-        // else if (event_code == (int)UIManager_EventsEnum.HIDING_PAUSE_MENU_REQUESTED)
-        // {
-        //     var menu = PauseMenuComponent.sSingleton;
-        //     if (menu != null)
-        //         if (UI.UIManager.sSingleton.pPanels.TryGetValue(menu, out var value))
-        //             value.SetActive(false);
-        // }
+		//     var menu = PauseMenuComponent.sSingleton; // pCanvas is not set
+		//     if (menu == null)
+		//         return;
+		//     if (!menus.Contains(menu))
+		//     {
+		//         menus.Add(menu);
+		//         UI.UIManager.sSingleton.DrawOnCanvas(menu);
+		//     }
+		//     else
+		//     {
+		//         UI.UIManager.sSingleton.pPanels[menu].SetActive(true);
+		//     }
+		// }
+		// else if (event_code == (int)UIManager_EventsEnum.HIDING_PAUSE_MENU_REQUESTED)
+		// {
+		//     var menu = PauseMenuComponent.sSingleton;
+		//     if (menu != null)
+		//         if (UI.UIManager.sSingleton.pPanels.TryGetValue(menu, out var value))
+		//             value.SetActive(false);
+		// }
 	}
 }
