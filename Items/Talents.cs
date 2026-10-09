@@ -98,7 +98,7 @@ public static class Talents
 		if (item == -100)
 		{
 			talentAsset.name = "Blank";
-			APItemsUtils.SetInGameSprite(talentAsset, "icon_");
+			APItemsUtils.SetInGameSprite(talentAsset, "icon_", true);
 			Utils.SetFieldValue(talentAsset, "talent_rarity_", TalentRarities.Generic);
 			// SetAndCycleRarity(talentAsset); // depreciated - if want to revive, change back TalentManager.rune_talent_interval_ to 3
 			talentAsset.GetFieldValue<LocalizedText>("localized_display_name_").SetKey("EmptyTalentDisplayName");

@@ -139,9 +139,11 @@ public static class DivineRelics
 
 	public static DivineRelicHandle TurnRelicToAPItem(DivineRelicHandle relic, long apItemId, int tier)
 	{
+		bool isBlank = apItemId == -100 || apItemId == -200;
+		
 		relic.name = apItemId.ToString();
-		APItemsUtils.SetInGameSprite(relic, "ingame_sprite_");
-		APItemsUtils.SetUISprite(relic, "ui_sprite_");
+		APItemsUtils.SetInGameSprite(relic, "ingame_sprite_", isBlank);
+		APItemsUtils.SetUISprite(relic, "ui_sprite_", isBlank);
 		Utils.SetFieldValue<List<SpritePair>>(relic, "conditional_ingame_sprite_list_", null);
 		Utils.SetFieldValue<List<SpritePair>>(relic, "conditional_ui_sprite_list_", null);
 

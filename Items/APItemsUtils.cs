@@ -16,32 +16,64 @@ public class APItemsUtils
 {
 	private static Sprite aPSprite_;
 	private static Sprite aPUISprite_;
-	public static long pBaseItemsId = 85000; //CHANGE: before release
-	public static long pBaseLocationsId = 87000; //CHANGE: before release
+	private static Sprite aPGrayscaleSprite_;
+	private static Sprite aPUIGrayscaleSprite_;
+	public static long pBaseItemsId = 85000; //LOCATION_CHANGES: on location changes update this
+	public static long pBaseLocationsId = 87000; //LOCATION_CHANGES: on location changes update this
 
-	public static void SetInGameSprite<T>(T relic, string fieldName) where T : class
+	public static void SetInGameSprite<T>(T relic, string fieldName, bool isGrayscale = false) where T : class
 	{
-		if (aPSprite_ == null)
+		if (isGrayscale)
 		{
-			var texture = new Texture2D(128, 128);
-			ImageConversion.LoadImage(texture, File.ReadAllBytes(Paths.PluginPath + @"\ArchipelagoRandomizer\Assets\color-icon 128x128.png"));
-			aPSprite_ = Sprite.Create(texture, new Rect(0, 0, 128, 128), new Vector2(0.5f, 0.5f));
+			if (aPGrayscaleSprite_ == null)
+			{
+				var texture = new Texture2D(128, 128);
+				ImageConversion.LoadImage(texture, File.ReadAllBytes(Paths.PluginPath + @"\ArchipelagoRandomizer\Assets\grayscale-icon 128x128.png"));
+				aPGrayscaleSprite_ = Sprite.Create(texture, new Rect(0, 0, 128, 128), new Vector2(0.5f, 0.5f));
+			}
+
+			relic.SetFieldValue(fieldName, aPGrayscaleSprite_);
+		}
+		else
+		{
+			if (aPSprite_ == null)
+			{
+				var texture = new Texture2D(128, 128);
+				ImageConversion.LoadImage(texture, File.ReadAllBytes(Paths.PluginPath + @"\ArchipelagoRandomizer\Assets\color-icon 128x128.png"));
+				aPSprite_ = Sprite.Create(texture, new Rect(0, 0, 128, 128), new Vector2(0.5f, 0.5f));
+			}
+
+			relic.SetFieldValue(fieldName, aPSprite_);
 		}
 
-		relic.SetFieldValue(fieldName, aPSprite_);
 	}
 
-	public static void SetUISprite<T>(T relic, string fieldName) where T : class
+	public static void SetUISprite<T>(T relic, string fieldName, bool isGrayscale) where T : class
 	{
-		if (aPUISprite_ == null)
+		if (isGrayscale)
 		{
-			var texture = new Texture2D(48, 48);
-			ImageConversion.LoadImage(texture, File.ReadAllBytes(Paths.PluginPath + @"\ArchipelagoRandomizer\Assets\color-icon 48x48.png"));
-			aPUISprite_ = Sprite.Create(texture, new Rect(0, 0, 48, 48), new Vector2(0.5f, 0.5f), 1, 0, SpriteMeshType.FullRect, new Vector4(0, 0, 0, 0));
-			//aPSprite_.textureRectOffset = new Vector2(23.0761f, 20.0761f);
+			if (aPUIGrayscaleSprite_ == null)
+			{
+				var texture = new Texture2D(48, 48);
+				ImageConversion.LoadImage(texture, File.ReadAllBytes(Paths.PluginPath + @"\ArchipelagoRandomizer\Assets\grayscale-icon 48x48.png"));
+				aPUIGrayscaleSprite_ = Sprite.Create(texture, new Rect(0, 0, 48, 48), new Vector2(0.5f, 0.5f), 1, 0, SpriteMeshType.FullRect, new Vector4(0, 0, 0, 0));
+			}
+
+			relic.SetFieldValue(fieldName, aPUIGrayscaleSprite_);
+		}
+		else
+		{
+			if (aPUISprite_ == null)
+			{
+				var texture = new Texture2D(48, 48);
+				ImageConversion.LoadImage(texture, File.ReadAllBytes(Paths.PluginPath + @"\ArchipelagoRandomizer\Assets\color-icon 48x48.png"));
+				aPUISprite_ = Sprite.Create(texture, new Rect(0, 0, 48, 48), new Vector2(0.5f, 0.5f), 1, 0, SpriteMeshType.FullRect, new Vector4(0, 0, 0, 0));
+				//aPSprite_.textureRectOffset = new Vector2(23.0761f, 20.0761f);
+			}
+
+			relic.SetFieldValue(fieldName, aPUISprite_);
 		}
 
-		relic.SetFieldValue(fieldName, aPUISprite_);
 	}
 
 	public static void SetUpAPItems()
