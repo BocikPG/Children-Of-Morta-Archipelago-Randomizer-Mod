@@ -8,6 +8,7 @@ using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using Zyklus.UI;
 using Zyklus;
+using System.Collections;
 
 namespace ArchipelagoRandomizer.UI;
 
@@ -19,6 +20,7 @@ namespace ArchipelagoRandomizer.UI;
 public class UIManager
 {
 	public static UIManager sSingleton;
+	public Canvas pCanvas;
 	public TMP_Text pTextBox;
 	public ScrollRect pScrollRect;
 	public GameObject pObjectToDisable;
@@ -34,6 +36,7 @@ public class UIManager
 	}
 
 	private bool showChatAlways_;
+	private bool isSomethingNewToShow_ = false;
 
 	private const float showInGameTime_ = 8f;
 	private float showInGameTimer_ = 8f;
@@ -53,6 +56,12 @@ public class UIManager
 				SetChatBoxActive(false, ChatBoxSetCause.TimerExpired);
 			}
 		}
+
+		if (isSomethingNewToShow_)
+		{
+			UpdateChatBox();
+			isSomethingNewToShow_ = false;
+		}
 	}
 
 	public void Init()
@@ -70,11 +79,18 @@ public class UIManager
 
 	private void OnNewLogMessage()
 	{
+		isSomethingNewToShow_ = true;
 
-		SetChatBoxActive(true, ChatBoxSetCause.NewMessageReceived);
+	}
+
+	private void UpdateChatBox()
+	{
+		//SetChatBoxActive(false, ChatBoxSetCause.NewMessageReceived);
 
 		pTextBox.text = APLogs.sSingleton.ScrollText;
-		pScrollRect.normalizedPosition = new Vector2(0, 0);
+
+		SetChatBoxActive(true, ChatBoxSetCause.NewMessageReceived);
+		Plugin.sSingleton.StartCoroutine(nameof(Plugin.sSingleton.FixScrollRect));
 
 		showInGameTimer_ = showInGameTime_;
 	}
@@ -85,6 +101,11 @@ public class UIManager
 		{
 			if (cause == ChatBoxSetCause.FloorLoadingEnd)
 			{
+				if (showInGameTimer_ > 0)
+				{
+					pObjectToDisable.SetActive(true);
+					return;
+				}
 				pObjectToDisable.SetActive(state);
 				return;
 			}
@@ -129,6 +150,8 @@ public class UIManager
 	{
 		GameObject panel = new GameObject("APConnectionDialogUI");
 		panel.transform.SetParent(canvas.transform);
+
+		pCanvas = canvas;
 
 		CreateBaseRect(panel, 300, 260, 0, 0);
 

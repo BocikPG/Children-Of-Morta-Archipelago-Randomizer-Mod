@@ -104,6 +104,12 @@ public class Plugin : BaseUnityPlugin
         initedBefore_ = true;
     }
 
+    public IEnumerator FixScrollRect()
+	{
+		yield return new WaitForEndOfFrame();
+		UI.UIManager.sSingleton.pScrollRect.verticalNormalizedPosition = 0f;
+	}
+
     private void OnGUI()
     {
         if (GUIManager.sSingleton == null)
